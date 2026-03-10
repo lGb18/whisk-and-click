@@ -38,16 +38,16 @@ export default function WizardPage() {
 
     setCakeConfig((prev) => ({
       ...prev,
-      [key]: option
+      [key]: option.toLowerCase()
     }));
-
+    
     const updatedHistory = [
       ...chatHistory,
-      { role: "user", text: option }
+      { role: "user", text: option.toLowerCase() }
     ];
 
     const nextIndex = currentQuestionIndex + 1;
-
+    console.log(updatedHistory)
     if (nextIndex < questions.length) {
       updatedHistory.push({
         role: "system",
@@ -68,7 +68,7 @@ export default function WizardPage() {
           <span style={{ color: "var(--text-secondary)", fontSize: "13px" }}>Step 1 of 3</span>
           <PageHeader
             title="Let’s design your cake"
-            subtitle="Answer the guided questions to build your cake configuration."
+            subtitle="Please select"
           />
         </div>
 

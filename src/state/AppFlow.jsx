@@ -5,13 +5,15 @@ const AppFlowContext = createContext();
 export function AppFlowProvider({ children }) {
   const [cakeConfig, setCakeConfig] = useState({
     occasion: "",
-    budget: "",
-    size: "",
-    tiers: "",
-    frosting: "",
+    flavor: "",
     style: "",
-    colorTheme: "",
-    shape: "Round"
+    budget: "",
+    size_category: "",
+    // tiers: "",
+    // frosting: "",
+    
+    // colorTheme: "",
+    // shape: "Round"
   });
 
   const [chatHistory, setChatHistory] = useState([]);
@@ -23,13 +25,15 @@ export function AppFlowProvider({ children }) {
   function resetFlow() {
     setCakeConfig({
       occasion: "",
-      budget: "",
-      size: "",
-      tiers: "",
-      frosting: "",
+      flavor: "",
       style: "",
-      colorTheme: "",
-      shape: "Round"
+      budget: "",
+      size_category: "",
+      // tiers: "",
+      // frosting: "",
+      // colorTheme: "",
+      // shape: "Round"
+      
     });
     setChatHistory([]);
     setRecommendations([]);

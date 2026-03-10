@@ -12,6 +12,7 @@ export default function SummaryPage() {
   const { cakeConfig } = useAppFlow();
 
   const result = validateConfig(cakeConfig);
+  console.log(cakeConfig)
 
   return (
     <div className="page-shell">

@@ -1,13 +1,14 @@
 export function scoreSimilarity(config, catalog) {
   const weights = {
-    occasion: 2,
-    budget: 1,
-    size: 2,
-    tiers: 2,
-    frosting: 2,
-    style: 3,
-    colorTheme: 1,
-    shape: 1
+    occasion: 10,
+    budget: 5,
+    size_category: 5,
+    flavor: 10,
+    // tiers: 2,
+    // frosting: 2,
+    style: 7,
+    // colorTheme: 1,
+    // shape: 1
   };
 
   const maxScore = Object.values(weights).reduce((sum, value) => sum + value, 0);

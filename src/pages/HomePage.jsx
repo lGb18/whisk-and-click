@@ -20,8 +20,8 @@ export default function HomePage() {
         }}
       >
         <PageHeader
-          title="Cake Design Recommendation System"
-          subtitle="Find personalized cake designs based on your preferences and bakery-supported options."
+          title="Whisk & Click"
+          subtitle="Find personalized cake designs based on your preferences and shop-supported options."
         />
         <PrimaryButton onClick={() => navigate("/wizard")}>
           Start Designing

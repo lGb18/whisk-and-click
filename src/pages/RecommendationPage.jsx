@@ -22,7 +22,11 @@ export default function RecommendationPage() {
   useEffect(() => {
     const filtered = filterCandidates(cakeConfig, cakeCatalog);
     const ranked = scoreSimilarity(cakeConfig, filtered);
+    console.log(filtered)
+    console.log(ranked)
+    console.log(cakeConfig)
     setRecommendations(ranked);
+    console.log(setRecommendations)
   }, [cakeConfig, setRecommendations]);
 
   const topMatches = recommendations.slice(0, 3);
@@ -40,12 +44,14 @@ export default function RecommendationPage() {
     setCreatedOrder(order);
     navigate("/order-confirmation");
   }
-
+  
   if (!bestMatch || bestMatch.normalizedScore < 0.6) {
     navigate("/fallback");
     return null;
   }
-
+  console.log(cakeConfig)
+  
+  
   return (
     <div className="page-shell">
       <div className="container-wide" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>

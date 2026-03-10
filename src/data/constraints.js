@@ -4,7 +4,7 @@ export const constraints = [
     category: "physical",
     severity: "error",
     description: "Small cakes cannot support 3 tiers",
-    condition: (config) => config.size === "Small" && config.tiers === "3",
+    condition: (config) => config.size_category === "Small" && config.tiers === "3",
     message: "Small cakes cannot have 3 tiers.",
     suggestion: "Choose 1 or 2 tiers, or increase the cake size."
   },

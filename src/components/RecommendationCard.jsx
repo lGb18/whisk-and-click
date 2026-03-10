@@ -1,6 +1,7 @@
 import PrimaryButton from "./PrimaryButton";
 
 export default function RecommendationCard({ cake, onSelect }) {
+  console.log(cake)
   return (
     <div
       className="card"
@@ -14,7 +15,7 @@ export default function RecommendationCard({ cake, onSelect }) {
     >
       <img
         src={cake.image}
-        alt={cake.title}
+        alt={cake.image_filename}
         style={{
           width: "100%",
           height: "230px",
@@ -50,7 +51,7 @@ export default function RecommendationCard({ cake, onSelect }) {
 
       <div style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
         <div>Budget: {cake.budget}</div>
-        <div>Size: {cake.size}</div>
+        <div>Size: {cake.size_category}</div>
         <div>Style: {cake.style}</div>
       </div>
 
