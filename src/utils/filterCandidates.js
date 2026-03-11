@@ -1,5 +1,6 @@
 export function filterCandidates(config, catalog) {
   console.log(catalog)
+  const normalize = (value) => String(value ?? "").trim().toLowerCase();
   return catalog.filter((cake) => {
     // if (!cake.available || !cake.supportedByShop) return false;
 
