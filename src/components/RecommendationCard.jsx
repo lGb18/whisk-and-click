@@ -32,7 +32,7 @@ export default function RecommendationCard({ cake, onSelect }) {
           fontWeight: 500
         }}
       >
-        {cake.title}
+        {cake.image_filename}
       </h3>
 
       <div

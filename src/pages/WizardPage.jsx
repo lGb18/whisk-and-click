@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { questions } from "../data/questions";
 import { useAppFlow } from "../state/AppFlow";
@@ -10,6 +10,7 @@ import SecondaryButton from "../components/SecondaryButton";
 import PrimaryButton from "../components/PrimaryButton";
 
 export default function WizardPage() {
+  const chatEndRef = useRef(null);
   const navigate = useNavigate();
   const {
     cakeConfig,
@@ -17,7 +18,7 @@ export default function WizardPage() {
     chatHistory,
     setChatHistory
   } = useAppFlow();
-
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
@@ -61,6 +62,9 @@ export default function WizardPage() {
     }
   }
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
   return (
     <div className="page-shell" >
       <div className="container-narrow" style={{ maxWidth: "820px", height:"80vh", display: "flex", flexDirection: "column", gap: "24px" , boxShadow: "0px 10px 22px rgba(0, 0, 0, 0.08)", padding: "10px", borderRadius: "16px", backgroundColor: "#F9F7F4"}}>
@@ -72,7 +76,7 @@ export default function WizardPage() {
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column-reverse", gap: "16px", height: "40vh" , overflowY: "auto", backgroundColor: "#FFFFFF", padding: "10px", borderRadius: "10px"}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "40vh" , overflowY: "auto", backgroundColor: "#FFFFFF", padding: "10px", borderRadius: "10px"}}>
           {chatHistory.map((item, index) =>
             item.role === "system" ? (
               <ChatBubbleSystem key={index} text={item.text} />
@@ -80,11 +84,12 @@ export default function WizardPage() {
               <ChatBubbleUser key={index} text={item.text} />
             )
           )}
+          <div ref={chatEndRef} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", minHeight:"80px", backgroundColor: "#FCE7C6", borderRadius: "10px", padding: "5px", justifyContent: "center", alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", minHeight:"80px", backgroundColor: "#FCE7C6", borderRadius: "10px", padding: "10px", justifyContent: "center", alignItems: "center" }}>
           {currentQuestion && (
-            <div style={{ display: "flex", gap: "24px", flexDirection: "column", minHeight: "68px", justifyContent: "center"}}>
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap"}}>
+            <div style={{ display: "flex", flexGrow: "1", gap: "24px", flexDirection: "column", minHeight: "68px", justifyContent: "center"}}>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignContent: "flex-start"}}>
                 {currentQuestion.options.map((option) => (
                   <ChatOptionButton key={option} onClick={() => setTimeout(() => handleAnswer(option), 300)}>
                     {option}

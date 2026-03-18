@@ -12,7 +12,7 @@ export const questions = [
   {
     key: "style",
     question: "What design style would you like to apply?",
-    options: ["Minimalist", "Floral", "Elegant"]
+    options: ["Minimalist", "Floral", "Elegant", "Kids-themed", "Playful", "Classic", "Realistic"]
   },
   {
     key: "budget",
