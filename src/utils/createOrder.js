@@ -1,12 +1,62 @@
-export function createOrder({ cakeConfig, selectedCake, source = "recommendation" }) {
+export function createOrder({
+  cakeConfig,
+  selectedCake,
+  customizationDraft,
+  checkoutDraft,
+  source = "checkout",
+ 
+}) {
   const now = new Date();
+  const customer = {
+    fullName: checkoutDraft?.fullName ?? "",
+    contactNumber: checkoutDraft?.contactNumber ?? "",
+  };
 
+  const fulfillment = {
+    type: checkoutDraft?.fulfillmentType ?? "pickup",
+    address:
+      (checkoutDraft?.fulfillmentType ?? "pickup") === "delivery"
+        ? {
+            addressLine1: checkoutDraft?.addressLine1 ?? "",
+            addressLine2: checkoutDraft?.addressLine2 ?? "",
+            city: checkoutDraft?.city ?? "",
+            region: checkoutDraft?.region ?? "",
+            postalCode: checkoutDraft?.postalCode ?? "",
+          }
+        : null,
+  };
+  const payment = {
+    method: checkoutDraft?.paymentMethod ?? "credit_card",
+    reference: checkoutDraft?.paymentReference ?? "",
+  };
+  const {
+    cakeMessage = "",
+    specialInstructions = "",
+    notes = "",
+    ...otherCustomizationFields
+  } = customizationDraft || {};
+  alert("Order Submitted");
   return {
+    // Metadata
     id: `ORD-${now.getTime()}`,
     createdAt: now.toISOString(),
-    cakeConfig,
-    selectedCake,
+    status: "Pending",
     source,
-    status: "Pending"
+    selectedCake,
+    cakeConfig,
+    customization: {
+      cakeMessage,
+      specialInstructions,
+      notes,
+      ...otherCustomizationFields,
+    },
+    checkout: {
+      customer,
+      fulfillment,
+      payment,
+    },
+    
+    // customizationDraft: customizationDraft ?? null,
+    // checkoutDraft: checkoutDraft ?? null,
   };
 }

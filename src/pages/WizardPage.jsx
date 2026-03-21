@@ -33,7 +33,9 @@ export default function WizardPage() {
   }, [chatHistory, setChatHistory]);
 
   const currentQuestion = questions[currentQuestionIndex];
-
+  function clearLoad(){
+    setChatHistory([])
+  }
   function handleAnswer(option) {
     const key = currentQuestion.key;
 
@@ -59,6 +61,7 @@ export default function WizardPage() {
     } else {
       setChatHistory(updatedHistory);
       navigate("/summary");
+      setChatHistory([]);
     }
   }
 
@@ -101,8 +104,8 @@ export default function WizardPage() {
         </div>
         <div style={{ display: "flex", gap: "16px", padding: "10px", flexDirection: "row" , justifyContent: "flex-end"}}>
           <div style={{ display: "flex", gap: "16px" }}>
-            <SecondaryButton onClick={() => navigate("/")}>Back</SecondaryButton>
-            <PrimaryButton onClick={() => navigate("/summary")}>Skip to Summary</PrimaryButton>
+            <SecondaryButton onClick={(event) => {navigate("/"); clearLoad();}}>Back</SecondaryButton>
+            <PrimaryButton onClick={() => {navigate("/summary"); clearLoad()}}>Skip to Summary</PrimaryButton>
           </div>
         </div>
       </div>

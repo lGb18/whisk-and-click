@@ -5,6 +5,8 @@ import SummaryPage from "./pages/SummaryPage";
 import RecommendationsPage from "./pages/RecommendationPage";
 import GeneratorPage from "./pages/GeneratorPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderGuard from "./components/OrderGuard";
 import { AppFlowProvider } from "./state/AppFlow";
 
 export default function App() {
@@ -14,10 +16,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/wizard" element={<WizardPage />} />
-          <Route path="/summary" element={<SummaryPage />} />
-          <Route path="/recommendations" element={<RecommendationsPage />} />
-          <Route path="/fallback" element={<GeneratorPage />} />
+          <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><SummaryPage /></OrderGuard>} />
+          <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><RecommendationsPage /></OrderGuard>} />
+          <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} />
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
       </BrowserRouter>
     </AppFlowProvider>
