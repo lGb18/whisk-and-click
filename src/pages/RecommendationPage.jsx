@@ -34,14 +34,14 @@ export default function RecommendationPage() {
 
   function handleSelect(cake) {
     setSelectedCake(cake);
+    console.log(cake)
+    // const order = createOrder({
+    //   cakeConfig,
+    //   selectedCake: cake,
+    //   source: "recommendation"
+    // });
 
-    const order = createOrder({
-      cakeConfig,
-      selectedCake: cake,
-      source: "recommendation"
-    });
-
-    setCreatedOrder(order);
+    // setCreatedOrder(order);
     navigate("/order-confirmation");
   }
   

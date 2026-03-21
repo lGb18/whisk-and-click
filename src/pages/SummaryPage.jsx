@@ -28,7 +28,7 @@ export default function SummaryPage() {
         >
           <PageHeader
             title="Review Your Cake Design"
-            subtitle="Check the selected cake properties before continuing."
+            subtitle="Here is the summary of your selected preferences."
           />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

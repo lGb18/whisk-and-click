@@ -21,6 +21,9 @@ export function AppFlowProvider({ children }) {
   const [selectedCake, setSelectedCake] = useState(null);
   const [fallbackPrompt, setFallbackPrompt] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [customizationDraft, setCustomizationDraft] = useState("");
+  const [checkoutDraft, setCheckoutDraft] = useState(null);
+  const [placeOrder, setPlaceOrder] = useState(null);
 
   function resetFlow() {
     setCakeConfig({
@@ -40,6 +43,9 @@ export function AppFlowProvider({ children }) {
     setSelectedCake(null);
     setFallbackPrompt("");
     setCreatedOrder(null);
+    setCustomizationDraft(null);
+    setCheckoutDraft(null);
+    setPlaceOrder(null);
   }
 
   return (
@@ -57,6 +63,10 @@ export function AppFlowProvider({ children }) {
         setFallbackPrompt,
         createdOrder,
         setCreatedOrder,
+        setCustomizationDraft,
+        customizationDraft,
+        checkoutDraft,
+        placeOrder,
         resetFlow
       }}
     >
