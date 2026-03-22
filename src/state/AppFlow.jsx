@@ -15,14 +15,31 @@ export function AppFlowProvider({ children }) {
     // colorTheme: "",
     // shape: "Round"
   });
-
+  const [customizationDraft, setCustomizationDraft] = useState({
+    colorTheme: "",
+    cakeMessage: "",
+    sizeAdjustment: "",
+    topperPreference: "",
+    specialInstructions: "",
+  });
+  const [checkoutDraft, setCheckoutDraft] = useState({
+    fullName: "",
+    contactNumber: "",
+    fulfillmentType: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    region: "",
+    postalCode: "",
+    paymentMethod: "",
+    paymentReference: "",
+  });
   const [chatHistory, setChatHistory] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCake, setSelectedCake] = useState(null);
   const [fallbackPrompt, setFallbackPrompt] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
-  const [customizationDraft, setCustomizationDraft] = useState("");
-  const [checkoutDraft, setCheckoutDraft] = useState(null);
+  
   const [placeOrder, setPlaceOrder] = useState(null);
 
   function resetFlow() {
@@ -43,8 +60,30 @@ export function AppFlowProvider({ children }) {
     setSelectedCake(null);
     setFallbackPrompt("");
     setCreatedOrder(null);
-    setCustomizationDraft(null);
-    setCheckoutDraft(null);
+    setCustomizationDraft({
+      fullName: "",
+      contactNumber: "",
+      fulfillmentType: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      region: "",
+      postalCode: "",
+      paymentMethod: "",
+      paymentReference: "",
+    });
+    setCheckoutDraft({
+      fullName: "",
+      contactNumber: "",
+      fulfillmentType: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      region: "",
+      postalCode: "",
+      paymentMethod: "",
+      paymentReference: "",
+    });
     setPlaceOrder(null);
   }
 

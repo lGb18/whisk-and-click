@@ -8,6 +8,7 @@ import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderGuard from "./components/OrderGuard";
 import { AppFlowProvider } from "./state/AppFlow";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/checkout" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><CheckoutPage /></OrderGuard>} />
         </Routes>
       </BrowserRouter>
+      
     </AppFlowProvider>
   );
 }

@@ -15,6 +15,13 @@ export default function OrderConfirmationPage() {
       setCustomizationDraft
    } = useAppFlow();
 
+  const { cake_id, flavor, occasion } = selectedCake;
+  const summary = { cake_id, flavor, occasion };
+
+  const COLOR_THEMES = ['Dark', 'Rainbow', 'Black and White', 'Butterbeer'];
+  const TOPPER_OPTIONS = ['None', 'Birthday Candle', 'Figurine', 'Paper Flowers', 'Canary Creams', 'Ton-Tongue Toffee'];
+  const SIZE_OPTIONS   = ['Smaller', 'Standard', 'Larger'];
+
   if (!selectedCake) {
     navigate("/wizard");
     return (
@@ -40,7 +47,7 @@ export default function OrderConfirmationPage() {
       <div className="order-confirmation-panel">
         <section className="card order-review-card">
           <PageHeader
-            title="Order Review"
+            title="Customize Your Cake Reference"
             subtitle="A quick snapshot of everything captured for your celebration."
           />
 
@@ -62,7 +69,8 @@ export default function OrderConfirmationPage() {
                 <dt>Created At</dt>
                 <dd>{createdOrder.createdAt}</dd>
               </div> */}
-              {Object.entries(selectedCake).map(([key, value]) => (
+              
+              {Object.entries(summary).map(([key, value]) => (
                 <div key={key}>
                   <dt>{key}</dt>
                   <dd>{value}</dd>
@@ -83,7 +91,46 @@ export default function OrderConfirmationPage() {
           </h2>
           <p className="order-feedback-subtitle">
           </p>
+
+          <select
+            className="order-feedback-input-3"
+            value={customizationDraft.colorTheme}
+            onChange={(e) =>
+              setCustomizationDraft(d => ({ ...d, colorTheme: e.target.value }))
+            }
+          >
+            <option value="" disabled>Select a theme…</option>
+            {COLOR_THEMES.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          <select
+            className="order-feedback-input-3"
+            value={customizationDraft.topperPreference}
+            onChange={(e) =>
+              setCustomizationDraft(d => ({ ...d, topperPreference: e.target.value }))
+            }
+          >
+            <option value="" disabled>Choose topper…</option>
+            {TOPPER_OPTIONS.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
           
+          <select
+            className="order-feedback-input-3"
+            value={customizationDraft.sizeAdjustment}
+            onChange={(e) =>
+              setCustomizationDraft(d => ({ ...d, sizeAdjustment: e.target.value }))
+            }
+          >
+            <option value="" disabled>Select size…</option>
+            {SIZE_OPTIONS.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
           <input
             className="order-feedback-input-2"
             placeholder="Cake Message"
@@ -91,7 +138,7 @@ export default function OrderConfirmationPage() {
             onChange={(e) =>
               setCustomizationDraft((prev) => ({
                 ...prev,
-                cakeMessage: e.target.value,
+                cakeMessage: e.target.value
               }))
             }
           />
@@ -104,14 +151,14 @@ export default function OrderConfirmationPage() {
             onChange={(e) =>
               setCustomizationDraft((prev) => ({
                 ...prev,
-                specialInstructions: e.target.value,
+                specialInstructions: e.target.value
               }))
             }
           />
 
           <div className="order-actions">
-            <SecondaryButton onClick={() => navigate("/recommendations")}>Recommendations</SecondaryButton>
-            <PrimaryButton onClick={() => navigate("/checkout")}>Checkout</PrimaryButton>
+            <SecondaryButton onClick={() => navigate("/recommendations")}>Back to Recommendations</SecondaryButton>
+            <PrimaryButton onClick={() => navigate("/checkout")}>Proceed to Checkout</PrimaryButton>
           </div>
         </section>
       </div>

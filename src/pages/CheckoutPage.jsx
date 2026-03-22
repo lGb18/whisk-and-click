@@ -71,6 +71,8 @@ export default function CheckoutPage() {
   const requiresAddress = formState.fulfillmentType === "delivery";
 
   const isSubmitDisabled = useMemo(() => {
+    setSubmitError("Please complete all required fields.");
+
     if (!formState.fullName.trim() || !formState.contactNumber.trim()) return true;
     if (requiresAddress) {
       return (
@@ -86,7 +88,7 @@ export default function CheckoutPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     if (isSubmitDisabled || !selectedCake || !cakeConfig) return;
-
+    
     setSubmitError("");
     setIsSubmitting(true);
 
@@ -127,8 +129,6 @@ export default function CheckoutPage() {
         source: "checkout",
         
         });
-        setCreatedOrder(finalOrder);
-        console.log("Verification", createdOrder)
         console.log("Final order:", finalOrder)  
         navigate('/') 
     } catch (error) {

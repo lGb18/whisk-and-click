@@ -266,6 +266,18 @@ input {
   color: var(--text-primary);
   resize: vertical;
 }
+.order-feedback-input-3 {
+  width: 100%;
+  min-height: 24px;
+  border: none;
+  border-radius: var(--radius-button);
+  padding: var(--space-md);
+  background: #F9F7F4;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: black;
+  resize: vertical;
+}
 
 .order-feedback-input::placeholder {
   color: var(--text-secondary);
@@ -416,7 +428,6 @@ input {
   font-size: 15px;
 }
 
-/* Right side - Summary Cards */
 .checkout-summary {
   display: flex;
   flex-direction: column;
@@ -473,7 +484,6 @@ input {
   margin: 16px 0;
 }
 
-/* Responsive */
 @media (max-width: 1100px) {
   .checkout-layout {
     grid-template-columns: 1fr;

@@ -32,10 +32,13 @@ export function createOrder({
   const {
     cakeMessage = "",
     specialInstructions = "",
-    notes = "",
+    sizeAdjustment= "",
+    topperPreference= "",
+    colorTheme = "",
     ...otherCustomizationFields
   } = customizationDraft || {};
   alert("Order Submitted");
+  
   return {
     // Metadata
     id: `ORD-${now.getTime()}`,
@@ -45,9 +48,11 @@ export function createOrder({
     selectedCake,
     cakeConfig,
     customization: {
+      colorTheme,
+      topperPreference,
+      sizeAdjustment,
       cakeMessage,
       specialInstructions,
-      notes,
       ...otherCustomizationFields,
     },
     checkout: {
@@ -56,7 +61,5 @@ export function createOrder({
       payment,
     },
     
-    // customizationDraft: customizationDraft ?? null,
-    // checkoutDraft: checkoutDraft ?? null,
   };
 }
