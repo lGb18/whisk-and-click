@@ -35,7 +35,7 @@ export function AppFlowProvider({ children }) {
     paymentReference: "",
   });
   const [chatHistory, setChatHistory] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendations, setRecommendations] = useState({});
   const [selectedCake, setSelectedCake] = useState(null);
   const [fallbackPrompt, setFallbackPrompt] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
@@ -56,7 +56,7 @@ export function AppFlowProvider({ children }) {
       
     });
     setChatHistory([]);
-    setRecommendations([]);
+    setRecommendations({});
     setSelectedCake(null);
     setFallbackPrompt("");
     setCreatedOrder(null);

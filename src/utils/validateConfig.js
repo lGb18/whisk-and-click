@@ -1,5 +1,8 @@
 import { constraints } from "../data/constraints";
 
+// return errors/warnings
+// used before recommendation
+
 export function validateConfig(config) {
   const errors = [];
   const warnings = [];

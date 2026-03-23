@@ -7,7 +7,7 @@ export default function CakeCard({ cake}) {
       className="card"
       style={{
         width: "380px",
-        padding: "20px",
+        padding: "10px",
         display: "flex",
         flexDirection: "column",
         gap: "16px"

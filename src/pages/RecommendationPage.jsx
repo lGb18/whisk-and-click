@@ -2,9 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppFlow } from "../state/AppFlow";
 import { cakeCatalog } from "../data/cakeCatalog";
-import { filterCandidates } from "../utils/filterCandidates";
-import { scoreSimilarity } from "../utils/scoreSimilarity";
-import { createOrder } from "../utils/createOrder";
+import { useRecommendations } from "../hooks/useRecommendation";
 import PageHeader from "../components/PageHeader";
 import RecommendationCard from "../components/RecommendationCard";
 import SecondaryButton from "../components/SecondaryButton";
@@ -14,42 +12,18 @@ export default function RecommendationPage() {
   const {
     cakeConfig,
     recommendations,
-    setRecommendations,
     setSelectedCake,
-    setCreatedOrder
   } = useAppFlow();
-
-  useEffect(() => {
-    const filtered = filterCandidates(cakeConfig, cakeCatalog);
-    const ranked = scoreSimilarity(cakeConfig, filtered);
-    console.log(filtered)
-    console.log(ranked)
-    console.log(cakeConfig)
-    setRecommendations(ranked);
-    console.log(setRecommendations)
-  }, [cakeConfig, setRecommendations]);
-
-  const topMatches = recommendations.slice(0, 3);
-  const bestMatch = topMatches[0];
-
+  
+  useRecommendations(cakeConfig, cakeCatalog);
+  const topList = recommendations?.topMatches ?? [];
+  
   function handleSelect(cake) {
     setSelectedCake(cake);
     console.log(cake)
-    // const order = createOrder({
-    //   cakeConfig,
-    //   selectedCake: cake,
-    //   source: "recommendation"
-    // });
-
-    // setCreatedOrder(order);
     navigate("/order-confirmation");
   }
-  
-  if (!bestMatch || bestMatch.normalizedScore < 0.6) {
-    navigate("/fallback");
-    return null;
-  }
-  console.log(cakeConfig)
+  // console.log(cakeConfig)
   
   
   return (
@@ -61,7 +35,7 @@ export default function RecommendationPage() {
         />
 
         <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-          {topMatches.map((cake) => (
+          {topList.map((cake) => (
             <RecommendationCard key={cake.id} cake={cake} onSelect={handleSelect} />
           ))}
         </div>

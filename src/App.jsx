@@ -19,7 +19,8 @@ export default function App() {
           <Route path="/wizard" element={<WizardPage />} />
           <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true }} redirectTo = "/wizard"><SummaryPage /></OrderGuard>} />
           <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true}} redirectTo = "/wizard"><RecommendationsPage /></OrderGuard>} />
-          <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} />
+          <Route path="/fallback" element={<GeneratorPage />} />
+          {/* <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} /> */}
           <Route path="/order-confirmation" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><OrderConfirmationPage /></OrderGuard>} />
           <Route path="/checkout" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><CheckoutPage /></OrderGuard>} />
         </Routes>

@@ -1,5 +1,6 @@
 export const cakeCatalog = [
   {
+    title: "",
     cake_id: "cake_00001",
     image_filename: "cake_00001.jpg",
     image: "/design_prototype/cake_00001.jpg",
@@ -9,9 +10,11 @@ export const cakeCatalog = [
     budget: "medium",
     size_category: "medium",
     notes: "number design",
-    tags: "number-shaped cake"
+    tags: ["number-shaped cake"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00002",
     image_filename: "cake_00002.jpg",
     image: "/design_prototype/cake_00002.jpg",
@@ -19,11 +22,13 @@ export const cakeCatalog = [
     flavor: "unknown",
     style: "elegant",
     budget: "high",
-    size_category: "high",
+    size_category: "large",
     notes: "with floral and topper",
-    tags: "multiple-layer, 3d-flowers, multiple-color, printed-plaque"
+    tags: ["multiple-layer, 3d-flowers, multiple-color, printed-plaque"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00003",
     image_filename: "cake_00003.jpg",
     image: "/design_prototype/cake_00003.jpg",
@@ -33,9 +38,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "medium",
     notes: "with topper",
-    tags: "strawberry-topper, printed-plaque"
+    tags: ["strawberry-topper, printed-plaque"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00004",
     image_filename: "cake_00004.jpg",
     image: "/design_prototype/cake_00004.jpg",
@@ -45,9 +52,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "medium",
     notes: "lego and minecraft theme",
-    tags: "theme-topper, lego, minecraft"
+    tags: ["theme-topper, lego, minecraft"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00005",
     image_filename: "cake_00005.jpg",
     image: "/design_prototype/cake_00005.jpg",
@@ -57,9 +66,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "plain chocolate with crown",
-    tags: "crown-topper"
+    tags: ["crown-topper"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00006",
     image_filename: "cake_00006.jpg",
     image: "/design_prototype/cake_00006.jpg",
@@ -69,9 +80,11 @@ export const cakeCatalog = [
     budget: "medium",
     size_category: "medium",
     notes: "with plaque and anime topper",
-    tags: "printed-plaque, chocolate-drip, nips-topper, pretzel-topper"
+    tags: ["printed-plaque, chocolate-drip, nips-topper, pretzel-topper"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00007",
     image_filename: "cake_00007.jpg",
     image: "/design_prototype/cake_00007.jpg",
@@ -81,9 +94,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "purely floral pink",
-    tags: "ball-topper, floral-pattern"
+    tags: ["ball-topper, floral-pattern"],
+    is_available: "",
   },
-  {
+  { 
+    title: "",
     cake_id: "cake_00008",
     image_filename: "cake_00008.jpg",
     image: "/design_prototype/cake_00008.jpg",
@@ -93,9 +108,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "purely floral grey",
-    tags: "ball-topper, floral-pattern"
+    tags: ["ball-topper, floral-pattern"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00009",
     image_filename: "cake_00009.jpg",
     image: "/design_prototype/cake_00009.jpg",
@@ -105,9 +122,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "kutsinta theme",
-    tags: "cheese-topper, caramel-color"
+    tags: ["cheese-topper, caramel-color"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00010",
     image_filename: "cake_00010.jpg",
     image: "/design_prototype/cake_00010.jpg",
@@ -117,9 +136,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "",
-    tags: "vanilla-frosting"
+    tags: ["vanilla-frosting"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00011",
     image_filename: "cake_00011.jpg",
     image: "/design_prototype/cake_00011.jpg",
@@ -129,9 +150,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "web-like abstract pattern icing",
-    tags: "weave-icing"
+    tags: ["weave-icing"],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00012",
     image_filename: "cake_00012.jpg",
     image: "/design_prototype/cake_00012.jpg",
@@ -141,9 +164,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "with cartoon baby topper",
-    tags: "dotted-frosting, chocolate-frosting, printed-plaque"
+    tags: ["dotted-frosting, chocolate-frosting, printed-plaque"],
+    is_available: "",
   },
-  {
+  { 
+    title: "",
     cake_id: "cake_00013",
     image_filename: "cake_00013.jpg",
     image: "/design_prototype/cake_00013.jpg",
@@ -153,9 +178,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "medium",
     notes: "icing on cake board",
-    tags: "overload, cheese-caramel, mix-topper"
+    tags: ["overload, cheese-caramel, mix-topper"],
+    is_available: "",
   },
-  {
+  { 
+    title: "",
     cake_id: "cake_00014",
     image_filename: "cake_00014.jpg",
     image: "/design_prototype/cake_00014.jpg",
@@ -165,9 +192,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "medium",
     notes: "cheese topper",
-    tags: "caramel-glaze, cheese-topper, sprinkles, printed-plaque"
+    tags: ["caramel-glaze, cheese-topper, sprinkles, printed-plaque"],
+    is_available: "",
   },
-  {
+  { 
+    title: "",
     cake_id: "cake_00015",
     image_filename: "cake_00015.jpg",
     image: "/design_prototype/cake_00015.jpg",
@@ -177,9 +206,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "chocolate glazing with topper",
-    tags: ""
+    tags: [""],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00016",
     image_filename: "cake_00016.jpg",
     image: "/design_prototype/cake_00016.jpg",
@@ -189,9 +220,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "heart shaped glazing",
-    tags: ""
+    tags: [""],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00017",
     image_filename: "cake_00017.jpg",
     image: "/design_prototype/cake_00017.jpg",
@@ -201,9 +234,11 @@ export const cakeCatalog = [
     budget: "medium",
     size_category: "medium",
     notes: "plaque with farmers theme design",
-    tags: ""
+    tags: [""],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00018",
     image_filename: "cake_00018.jpg",
     image: "/design_prototype/cake_00018.jpg",
@@ -213,9 +248,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "heart-shaped cake with flowers",
-    tags: ""
+    tags: [""],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00019",
     image_filename: "cake_00019.jpg",
     image: "/design_prototype/cake_00019.jpg",
@@ -225,9 +262,11 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "medium",
     notes: "chocolatey toppings with plaque",
-    tags: ""
+    tags: [""],
+    is_available: "",
   },
   {
+    title: "",
     cake_id: "cake_00020",
     image_filename: "cake_00020.jpg",
     image: "/design_prototype/cake_00020.jpg",
@@ -237,6 +276,7 @@ export const cakeCatalog = [
     budget: "low",
     size_category: "small",
     notes: "heart-shaped with valentines theme",
-    tags: ""
-  }
+    tags: [""],
+    is_available: "",
+  },
 ]

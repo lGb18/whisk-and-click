@@ -1,12 +1,14 @@
+// weighted scoring layer v1
+
 export function scoreSimilarity(config, catalog) {
   const weights = {
-    occasion: 10,
-    budget: 5,
-    size_category: 5,
-    flavor: 4,
+    occasion: 8,
+    // budget: 5,
+    // size_category: 5,
+    flavor: 5,
     // tiers: 2,
     // frosting: 2,
-    style: 9,
+    style: 10,
     // colorTheme: 1,
     // shape: 1
   };

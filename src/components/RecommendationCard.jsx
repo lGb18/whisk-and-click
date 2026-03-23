@@ -1,7 +1,7 @@
 import PrimaryButton from "./PrimaryButton";
 
 export default function RecommendationCard({ cake, onSelect }) {
-  console.log(cake)
+  // console.log(cake)
   return (
     <div
       className="card"
