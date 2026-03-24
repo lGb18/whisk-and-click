@@ -15,6 +15,7 @@ export function AppFlowProvider({ children }) {
     // colorTheme: "",
     // shape: "Round"
   });
+
   const [customizationDraft, setCustomizationDraft] = useState({
     colorTheme: "",
     cakeMessage: "",
@@ -22,6 +23,7 @@ export function AppFlowProvider({ children }) {
     topperPreference: "",
     specialInstructions: "",
   });
+
   const [checkoutDraft, setCheckoutDraft] = useState({
     fullName: "",
     contactNumber: "",
@@ -34,14 +36,20 @@ export function AppFlowProvider({ children }) {
     paymentMethod: "",
     paymentReference: "",
   });
+
   const [chatHistory, setChatHistory] = useState([]);
+  
   const [recommendations, setRecommendations] = useState({});
   const [selectedCake, setSelectedCake] = useState(null);
-  const [fallbackPrompt, setFallbackPrompt] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
   
-  const [placeOrder, setPlaceOrder] = useState(null);
+  const [fallbackPrompt, setFallbackPrompt] = useState("");
+  const [fallbackStatus, setFallbackStatus] = useState("");
+  const [fallbackResult, setFallbackResult] = useState({});
+  const [fallbackError, setFallbackError] = useState("");
+  // const [placeOrder, setPlaceOrder] = useState(null);
 
+  
   function resetFlow() {
     setCakeConfig({
       occasion: "",
@@ -56,9 +64,9 @@ export function AppFlowProvider({ children }) {
       
     });
     setChatHistory([]);
+
     setRecommendations({});
     setSelectedCake(null);
-    setFallbackPrompt("");
     setCreatedOrder(null);
     setCustomizationDraft({
       fullName: "",
@@ -84,7 +92,11 @@ export function AppFlowProvider({ children }) {
       paymentMethod: "",
       paymentReference: "",
     });
-    setPlaceOrder(null);
+    // setPlaceOrder(null);
+    setFallbackPrompt("");
+    setFallbackStatus("");
+    setFallbackResult({});
+    setFallbackError("");
   }
 
   return (
@@ -98,6 +110,12 @@ export function AppFlowProvider({ children }) {
         setRecommendations,
         selectedCake,
         setSelectedCake,
+        setFallbackStatus,
+        fallbackStatus,
+        setFallbackResult,
+        fallbackResult,
+        setFallbackError,
+        fallbackError,
         fallbackPrompt,
         setFallbackPrompt,
         createdOrder,
@@ -105,7 +123,6 @@ export function AppFlowProvider({ children }) {
         setCustomizationDraft,
         customizationDraft,
         checkoutDraft,
-        placeOrder,
         resetFlow
       }}
     >
