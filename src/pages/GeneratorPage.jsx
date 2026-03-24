@@ -12,6 +12,7 @@ export default function GeneratorPage() {
   const { 
     cakeConfig, 
     fallbackPrompt,
+    fallbackStatus,
     fallbackResult, 
     setFallbackPrompt, 
     setFallbackError,
@@ -21,13 +22,36 @@ export default function GeneratorPage() {
   console.log('configPrompt: ', configPrompt(cakeConfig))
   console.log(cakeConfig)
   useEffect(() => {
-    aiGenerator(configPrompt(cakeConfig), "pollinations").then((result) => {
-      setFallbackResult(result);
-      console.log(result);
-      console.log("url:",result.imageUrl);
-      console.log("status:",result.status)
-    });
-  }, [cakeConfig, setFallbackResult]);
+    const prompt = configPrompt(cakeConfig);
+
+    setFallbackPrompt(prompt);
+    setFallbackStatus("loading");
+    setFallbackError("");
+
+    aiGenerator(prompt, "pollinations", {
+      model: "zimage",
+      width: 640,
+      height: 360,
+    })
+      .then((result) => {
+        setFallbackResult(result);
+        setFallbackStatus("success");
+        console.log(result);
+        console.log("url:", result.imageUrl);
+        console.log("status:", result.status);
+      })
+      .catch((error) => {
+        console.error(error);
+        setFallbackError(error.message || "Generation failed.");
+        setFallbackStatus("error");
+      });
+  }, [
+    cakeConfig,
+    setFallbackPrompt,
+    setFallbackResult,
+    setFallbackStatus,
+    setFallbackError,
+  ]);
   
   // useEffect(() => {
   //   setFallbackPrompt(configPrompt(cakeConfig));
@@ -63,15 +87,21 @@ export default function GeneratorPage() {
             padding: "16px",
           }}
           >
-          <img
-          src={fallbackResult.imageUrl}
-          style={{
-            maxWidth: "100%",
-            maxHeight: "360px",
-            objectFit: "contain",
-            borderRadius: "12px"
-          }}
-          />
+            {fallbackStatus === "loading" && <div>Generating image...</div>}
+            {fallbackStatus === "error" && (
+              <div>Generation failed.</div>
+            )}
+            {fallbackStatus === "success" && fallbackResult?.imageUrl && (
+            <img
+            src={fallbackResult.imageUrl}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "360px",
+              objectFit: "contain",
+              borderRadius: "12px" 
+              }} 
+            />
+            )}
         </div>
 
         <SecondaryButton onClick={() => navigate("/recommendations")}>
