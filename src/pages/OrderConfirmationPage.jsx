@@ -12,17 +12,89 @@ export default function OrderConfirmationPage() {
       cakeConfig,
       selectedCake,
       customizationDraft,
-      setCustomizationDraft
+      setCustomizationDraft,
+      selectedFallback,
    } = useAppFlow();
 
-  const { cake_id, flavor, occasion } = selectedCake;
-  const summary = { cake_id, flavor, occasion };
+  
 
   const COLOR_THEMES = ['Dark', 'Rainbow', 'Black and White', 'Butterbeer'];
   const TOPPER_OPTIONS = ['None', 'Birthday Candle', 'Figurine', 'Paper Flowers', 'Canary Creams', 'Ton-Tongue Toffee'];
   const SIZE_OPTIONS   = ['Smaller', 'Standard', 'Larger'];
 
-  if (!selectedCake) {
+  
+  const isFallbackEmpty = Object.keys(selectedFallback).length === 0;
+  console.log(selectedFallback);
+  function DefaultSection({data}){
+      const summary = {
+      "Cake ID": data.cake_id,
+      "Flavor": data.flavor,
+      "Occasion": data.occasion,
+    };
+    return (
+      <div className="order-review-body">
+        <dl className="order-review-details">
+          <div>
+            <dt>Selected Cake</dt>
+            <dd>{data.image_filename}</dd>
+          </div>
+          {Object.entries(summary).map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="order-preview" aria-hidden="true">
+          <CakeCard key={data.id} cake={data} />
+        </div>
+      </div>
+    );
+  }
+  function FallbackSection({data}){
+    return(
+      <div className="order-review-body">
+            <dl className="order-review-details">
+              <div>
+                <dt>Selected Cake</dt>
+                <dd>{data.provider}</dd>
+              </div>
+              {/* {Object.entries(data).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{key}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))} */}
+            </dl>
+
+            <div className="order-preview" aria-hidden="true"   >
+              <div
+                className="card"
+                style={{
+                  width: "380px",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px"
+                }}
+              >
+                <img
+                  src={data.imageUrl}
+                  style={{
+                    width: "100%",
+                    height: "230px",
+                    objectFit: "cover",
+                    borderRadius: "12px"
+                  }}
+                />
+              </div>
+            </div>
+            
+          </div>
+    );
+  }
+
+  if (!selectedCake && !selectedFallback) {
     navigate("/wizard");
     return (
       <div className="page-shell">
@@ -50,39 +122,9 @@ export default function OrderConfirmationPage() {
             title="Customize Your Cake Reference"
             subtitle="A quick snapshot of everything captured for your celebration."
           />
-
-          <div className="order-review-body">
-            <dl className="order-review-details">
-              <div>
-                <dt>Selected Cake</dt>
-                <dd>{selectedCake.image_filename}</dd>
-              </div>
-              {/* <div>
-                <dt>Order ID</dt>
-                <dd>{createdOrder.id}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>{createdOrder.status}</dd>
-              </div>
-              <div>
-                <dt>Created At</dt>
-                <dd>{createdOrder.createdAt}</dd>
-              </div> */}
-              
-              {Object.entries(summary).map(([key, value]) => (
-                <div key={key}>
-                  <dt>{key}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="order-preview" aria-hidden="true"   >
-              <CakeCard key={selectedCake.id} cake={selectedCake} />
-            </div>
-            
-          </div>
+          {isFallbackEmpty
+            ? <DefaultSection data={selectedCake} />
+            : <FallbackSection data={selectedFallback} />}
         </section>
 
         <section className="card order-feedback-card">

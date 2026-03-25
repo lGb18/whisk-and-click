@@ -1,6 +1,7 @@
 export function createOrder({
   cakeConfig,
   selectedCake,
+  selectedFallback,
   customizationDraft,
   checkoutDraft,
   source = "checkout",
@@ -37,6 +38,7 @@ export function createOrder({
     colorTheme = "",
     ...otherCustomizationFields
   } = customizationDraft || {};
+  const chosenCake = selectedCake || selectedFallback;
   alert("Order Submitted");
   
   return {
@@ -45,7 +47,7 @@ export function createOrder({
     createdAt: now.toISOString(),
     status: "Pending",
     source,
-    selectedCake,
+    chosenCake,
     cakeConfig,
     customization: {
       colorTheme,

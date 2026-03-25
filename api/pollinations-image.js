@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       model = "zimage",
       width = 640,
       height = 360,
-      seed,
+      seed = Math.floor(Math.random() * 1000000),
       enhance,
       duration = 1,
       nologo = true,
@@ -22,8 +22,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Prompt is required." });
     }
 
-    const key = process.env.SECRET_POLLINATIONS_KEY;
-    console.log("KEY EXISTS:", !!process.env.SECRET_POLLINATIONS_KEY);
+    const key = process.env.DEV_POLLINATIONS_KEY;
+    console.log("KEY EXISTS:", !!process.env.DEV_POLLINATIONS_KEY);
     if (!key) {
       return res.status(500).json({ error: "Missing Pollinations secret key." });
     }
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     if (safe !== undefined) params.set("safe", String(safe));
     params.set("key", key);
 
-    const imageUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?${params.toString()}`;
+    const imageUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?${params.toString()}&t=${Date.now()}`;
 
     return res.status(200).json({
       provider: "pollinations",

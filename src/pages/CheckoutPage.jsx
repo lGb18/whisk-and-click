@@ -14,14 +14,22 @@ export default function CheckoutPage() {
     checkoutDraft,
     setCheckoutDraft,
     setCreatedOrder,
-    createdOrder
+    createdOrder,
+    selectedFallback,
+    resetFlow,
   } = useAppFlow();
 
   useEffect(() => {
-    if (!selectedCake || !cakeConfig) {
+    return () => {
+      resetFlow();
+    };
+  }, []);
+
+  useEffect(() => {
+    if ((!selectedCake && !selectedFallback) || !cakeConfig) {
       navigate("/");
     }
-  }, [selectedCake, cakeConfig, navigate]);
+  }, [selectedCake, cakeConfig, selectedFallback, navigate]);
 
   const [formState, setFormState] = useState(() => ({
     fullName: checkoutDraft?.fullName || "",
@@ -56,10 +64,13 @@ export default function CheckoutPage() {
   }, [checkoutDraft]);
 
   useEffect(() => {
-    if (typeof setCheckoutDraft === "function") {
+    if (!checkoutDraft) return;
+    
+    const isDifferent = JSON.stringify(checkoutDraft) !== JSON.stringify(formState);
+    if (isDifferent && typeof setCheckoutDraft === "function") {
       setCheckoutDraft(formState);
     }
-  }, [formState, setCheckoutDraft]);
+  }, [formState, checkoutDraft, setCheckoutDraft]);
 
   function handleChange(field) {
     return (event) => {
@@ -87,43 +98,45 @@ export default function CheckoutPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (isSubmitDisabled || !selectedCake || !cakeConfig) return;
+    if (isSubmitDisabled || !cakeConfig || (!selectedCake && !selectedFallback)) return;
     
     setSubmitError("");
     setIsSubmitting(true);
 
     try {
-      const orderPayload = {
-        customer: {
-          fullName: formState.fullName,
-          contactNumber: formState.contactNumber,
-        },
-        fulfillment: {
-          type: formState.fulfillmentType,
-          address:
-            formState.fulfillmentType === "delivery"
-              ? {
-                  addressLine1: formState.addressLine1,
-                  addressLine2: formState.addressLine2,
-                  city: formState.city,
-                  region: formState.region,
-                  postalCode: formState.postalCode,
-                }
-              : null,
-        },
-        payment: {
-          method: formState.paymentMethod,
-          reference: formState.paymentReference,    
-        },
-        cakeConfig,
-        selectedCake,
-        customizationDraft,
-        checkoutDraft: formState,
-      };
+      // const orderPayload = {
+      //   customer: {
+      //     fullName: formState.fullName,
+      //     contactNumber: formState.contactNumber,
+      //   },
+      //   fulfillment: {
+      //     type: formState.fulfillmentType,
+      //     address:
+      //       formState.fulfillmentType === "delivery"
+      //         ? {
+      //             addressLine1: formState.addressLine1,
+      //             addressLine2: formState.addressLine2,
+      //             city: formState.city,
+      //             region: formState.region,
+      //             postalCode: formState.postalCode,
+      //           }
+      //         : null,
+      //   },
+      //   payment: {
+      //     method: formState.paymentMethod,
+      //     reference: formState.paymentReference,    
+      //   },
+      //   cakeConfig,
+      //   selectedCake,
+      //   selectedFallback,
+      //   customizationDraft,
+      //   checkoutDraft: formState,
+      // };
       
         const finalOrder  = createOrder({
         cakeConfig,
         selectedCake,
+        selectedFallback,
         customizationDraft,
         checkoutDraft: formState,
         source: "checkout",
@@ -292,7 +305,8 @@ export default function CheckoutPage() {
               <div className="summary-details">
                 <h3 className="summary-title">Your Cake</h3>
                 <p className="summary-item">
-                  <strong>{selectedCake?.title ?? "Custom Cake"}</strong>
+                  {/* <strong>{selectedCake?.title ?? "Custom Cake"}</strong> */}
+                  <strong>{"Custom Cake"}</strong>
                 </p>
                 {cakeConfig &&
                   Object.entries(cakeConfig).map(([key, value]) => (

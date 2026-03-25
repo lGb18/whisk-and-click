@@ -5,6 +5,7 @@ import { configPrompt } from "../utils/configPrompt";
 import PageHeader from "../components/PageHeader";
 import WarningAlert from "../components/WarningAlert";
 import SecondaryButton from "../components/SecondaryButton";
+import PrimaryButton from "../components/PrimaryButton";
 import { aiGenerator } from "../utils/aiGenerator";
 
 export default function GeneratorPage() {
@@ -17,11 +18,19 @@ export default function GeneratorPage() {
     setFallbackPrompt, 
     setFallbackError,
     setFallbackStatus,
-    setFallbackResult, 
+    setFallbackResult,
+    selectedFallback,
+    setSelectedFallback, 
   } = useAppFlow();
   console.log('configPrompt: ', configPrompt(cakeConfig))
-  console.log(cakeConfig)
-  useEffect(() => {
+  console.log(cakeConfig);
+
+  const handleFallbackDesign  = (fallback) => {
+    setSelectedFallback(fallback);
+    console.log(selectedFallback);
+    navigate('/order-confirmation')
+  }
+  const generateFallbackImage = async() => {
     const prompt = configPrompt(cakeConfig);
 
     setFallbackPrompt(prompt);
@@ -45,13 +54,42 @@ export default function GeneratorPage() {
         setFallbackError(error.message || "Generation failed.");
         setFallbackStatus("error");
       });
-  }, [
-    cakeConfig,
-    setFallbackPrompt,
-    setFallbackResult,
-    setFallbackStatus,
-    setFallbackError,
-  ]);
+  }
+
+  useEffect(() => {
+    generateFallbackImage();
+    }, []);
+  // useEffect(() => {
+  //   const prompt = configPrompt(cakeConfig);
+
+  //   setFallbackPrompt(prompt);
+  //   setFallbackStatus("loading");
+  //   setFallbackError("");
+
+  //   aiGenerator(prompt, "pollinations", {
+  //     model: "zimage",
+  //     width: 640,
+  //     height: 360,
+  //   })
+  //     .then((result) => {
+  //       setFallbackResult(result);
+  //       setFallbackStatus("success");
+  //       console.log(result);
+  //       console.log("url:", result.imageUrl);
+  //       console.log("status:", result.status);
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //       setFallbackError(error.message || "Generation failed.");
+  //       setFallbackStatus("error");
+  //     });
+  // }, [
+  //   cakeConfig,
+  //   setFallbackPrompt,
+  //   setFallbackResult,
+  //   setFallbackStatus,
+  //   setFallbackError,
+  // ]);
   
   // useEffect(() => {
   //   setFallbackPrompt(configPrompt(cakeConfig));
@@ -103,7 +141,8 @@ export default function GeneratorPage() {
             />
             )}
         </div>
-
+        <PrimaryButton onClick = {(generateFallbackImage)}>Regenerate</PrimaryButton>
+        <SecondaryButton onClick = {() => handleFallbackDesign(fallbackResult)}>Add to Cart</SecondaryButton>
         <SecondaryButton onClick={() => navigate("/recommendations")}>
           Back to Recommendations
         </SecondaryButton>

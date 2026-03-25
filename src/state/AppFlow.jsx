@@ -47,6 +47,7 @@ export function AppFlowProvider({ children }) {
   const [fallbackStatus, setFallbackStatus] = useState("");
   const [fallbackResult, setFallbackResult] = useState({});
   const [fallbackError, setFallbackError] = useState("");
+  const [selectedFallback, setSelectedFallback] = useState({});
   // const [placeOrder, setPlaceOrder] = useState(null);
 
   
@@ -97,6 +98,7 @@ export function AppFlowProvider({ children }) {
     setFallbackStatus("");
     setFallbackResult({});
     setFallbackError("");
+    setSelectedFallback({});
   }
 
   return (
@@ -122,6 +124,8 @@ export function AppFlowProvider({ children }) {
         setCreatedOrder,
         setCustomizationDraft,
         customizationDraft,
+        setSelectedFallback,
+        selectedFallback,
         checkoutDraft,
         resetFlow
       }}
