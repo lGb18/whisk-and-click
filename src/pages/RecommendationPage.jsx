@@ -13,6 +13,7 @@ export default function RecommendationPage() {
     cakeConfig,
     recommendations,
     setSelectedCake,
+    setSelectedFallback,
   } = useAppFlow();
   
   useRecommendations(cakeConfig, cakeCatalog);
@@ -20,6 +21,7 @@ export default function RecommendationPage() {
   
   function handleSelect(cake) {
     setSelectedCake(cake);
+    setSelectedFallback(null);
     console.log(cake)
     navigate("/order-confirmation");
   }

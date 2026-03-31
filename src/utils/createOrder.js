@@ -1,67 +1,35 @@
 export function createOrder({
+  userId,
   cakeConfig,
   selectedCake,
   selectedFallback,
   customizationDraft,
   checkoutDraft,
-  source = "checkout",
- 
-}) {
-  const now = new Date();
-  const customer = {
-    fullName: checkoutDraft?.fullName ?? "",
-    contactNumber: checkoutDraft?.contactNumber ?? "",
-  };
-
-  const fulfillment = {
-    type: checkoutDraft?.fulfillmentType ?? "pickup",
-    address:
-      (checkoutDraft?.fulfillmentType ?? "pickup") === "delivery"
-        ? {
-            addressLine1: checkoutDraft?.addressLine1 ?? "",
-            addressLine2: checkoutDraft?.addressLine2 ?? "",
-            city: checkoutDraft?.city ?? "",
-            region: checkoutDraft?.region ?? "",
-            postalCode: checkoutDraft?.postalCode ?? "",
-          }
-        : null,
-  };
-  const payment = {
-    method: checkoutDraft?.paymentMethod ?? "credit_card",
-    reference: checkoutDraft?.paymentReference ?? "",
-  };
-  const {
-    cakeMessage = "",
-    specialInstructions = "",
-    sizeAdjustment= "",
-    topperPreference= "",
-    colorTheme = "",
-    ...otherCustomizationFields
-  } = customizationDraft || {};
-  const chosenCake = selectedCake || selectedFallback;
-  alert("Order Submitted");
   
+}) {
+  const hasSelectedCake = !!selectedCake;
+  const hasSelectedFallback =
+  !!selectedFallback && Object.keys(selectedFallback).length > 0;
+  function sanitizeFallbackImageUrl(url) {
+    if (!url) return null;
+
+    try {
+      const parsed = new URL(url);
+      parsed.searchParams.delete("key");
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  }
   return {
-    // Metadata
-    id: `ORD-${now.getTime()}`,
-    createdAt: now.toISOString(),
-    status: "Pending",
-    source,
-    chosenCake,
-    cakeConfig,
-    customization: {
-      colorTheme,
-      topperPreference,
-      sizeAdjustment,
-      cakeMessage,
-      specialInstructions,
-      ...otherCustomizationFields,
-    },
-    checkout: {
-      customer,
-      fulfillment,
-      payment,
-    },
-    
+    user_id: userId,
+    reference_source: hasSelectedCake ? "recommendation" : "fallback_ai",
+    cake_reference_id: hasSelectedCake ? selectedCake.cake_id : null,
+    fallback_prompt: !hasSelectedCake && hasSelectedFallback ? selectedFallback.prompt || null : null,
+    fallback_image_url: !hasSelectedCake && hasSelectedFallback ? sanitizeFallbackImageUrl(selectedFallback.imageUrl) || null : null,
+    cake_config: cakeConfig || {},
+    customization: customizationDraft || {},
+    checkout_details: checkoutDraft || {},
+    status: "pending",
   };
 }

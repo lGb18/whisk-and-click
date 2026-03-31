@@ -7,27 +7,34 @@ import GeneratorPage from "./pages/GeneratorPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderGuard from "./components/OrderGuard";
+import AuthPage from "./pages/AuthPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
+import { AuthProvider } from "./context/AuthProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { AppFlowProvider } from "./state/AppFlow";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
 export default function App() {
   return (
     <AppFlowProvider>
+      <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/wizard" element={<WizardPage />} />
           <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true }} redirectTo = "/wizard"><SummaryPage /></OrderGuard>} />
           <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true}} redirectTo = "/wizard"><RecommendationsPage /></OrderGuard>} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/my-orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>}/>
           <Route path="/fallback" element={<GeneratorPage />} />
           {/* <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} /> */}
           {/* <Route path="/order-confirmation" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><OrderConfirmationPage /></OrderGuard>} /> */}
            <Route path="/order-confirmation" element={<OrderConfirmationPage/>}/>
           {/* <Route path="/checkout" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><CheckoutPage /></OrderGuard>} /> */}
-          <Route path="/checkout" element={<CheckoutPage/>}/>
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>}/>
         </Routes>
       </BrowserRouter>
-      
+      </AuthProvider>
     </AppFlowProvider>
   );
 }

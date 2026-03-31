@@ -23,7 +23,7 @@ export default function OrderConfirmationPage() {
   const SIZE_OPTIONS   = ['Smaller', 'Standard', 'Larger'];
 
   
-  const isFallbackEmpty = Object.keys(selectedFallback).length === 0;
+  const isFallbackEmpty = !selectedFallback || Object.keys(selectedFallback).length === 0;
   console.log(selectedFallback);
   function DefaultSection({data}){
       const summary = {

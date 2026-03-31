@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAppFlow } from "../state/AppFlow";
 import { createOrder } from "../utils/createOrder"
+import { supabase } from "../lib/supabaseClient";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -16,14 +17,14 @@ export default function CheckoutPage() {
     setCreatedOrder,
     createdOrder,
     selectedFallback,
-    resetFlow,
+    // resetFlow,
   } = useAppFlow();
 
-  useEffect(() => {
-    return () => {
-      resetFlow();
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     resetFlow();
+  //   };
+  // }, []);
 
   useEffect(() => {
     if ((!selectedCake && !selectedFallback) || !cakeConfig) {
@@ -104,49 +105,39 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      // const orderPayload = {
-      //   customer: {
-      //     fullName: formState.fullName,
-      //     contactNumber: formState.contactNumber,
-      //   },
-      //   fulfillment: {
-      //     type: formState.fulfillmentType,
-      //     address:
-      //       formState.fulfillmentType === "delivery"
-      //         ? {
-      //             addressLine1: formState.addressLine1,
-      //             addressLine2: formState.addressLine2,
-      //             city: formState.city,
-      //             region: formState.region,
-      //             postalCode: formState.postalCode,
-      //           }
-      //         : null,
-      //   },
-      //   payment: {
-      //     method: formState.paymentMethod,
-      //     reference: formState.paymentReference,    
-      //   },
-      //   cakeConfig,
-      //   selectedCake,
-      //   selectedFallback,
-      //   customizationDraft,
-      //   checkoutDraft: formState,
-      // };
-      
-        const finalOrder  = createOrder({
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("You must sign in before placing an order.");
+      }
+
+      const orderPayload = createOrder({
+        userId: user.id,
         cakeConfig,
         selectedCake,
         selectedFallback,
         customizationDraft,
         checkoutDraft: formState,
-        source: "checkout",
-        
-        });
-        console.log("Final order:", finalOrder)  
-        navigate('/') 
+      });
+
+      const { data, error } = await supabase
+        .from("orders")
+        .insert(orderPayload)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setCreatedOrder(data);
+      navigate("/my-orders");
     } catch (error) {
       console.error(error);
-      setSubmitError("We couldn’t finish the checkout just now. Please try again.");
+      setSubmitError(error.message || "We couldn’t finish the checkout just now. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -322,14 +313,14 @@ export default function CheckoutPage() {
               <h3 className="summary-title">Customization Notes</h3>
               <p className="summary-copy">
                 {customizationDraft?.specialInstructions
-                  ? cakeConfig?.specialInstructions
+                  ? customizationDraft.specialInstructions
                   : "No additional notes at the moment."}
               </p>
               <hr className="summary-divider" />
               <div className="summary-meta">
                 <p className="summary-item">
                   <span>Flavor</span>
-                  <span>{customizationDraft?.cakeMessage || cakeConfig?.cakeMessage || "TBD"}</span>
+                  <span>{customizationDraft?.cakeMessage || "TBD"}</span>
                 </p>
                 {/* <p className="summary-item">
                   <span>Serving size</span>
