@@ -1,5 +1,11 @@
 import { useAuthContext } from "../context/AuthProvider";
 
 export function useAuthSession() {
-  return useAuthContext();
+  const context = useAuthContext();
+
+  if (!context) {
+    throw new Error('useAuthSession must be used within AuthProvider');
+  }
+
+  return context;
 }

@@ -12,6 +12,8 @@ import MyOrdersPage from "./pages/MyOrdersPage";
 import { AuthProvider } from "./context/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AppFlowProvider } from "./state/AppFlow";
+import OrderDetailsPage from './pages/OrderDetailsPage';
+import AdminOrdersPage from './pages/AdminOrdersPage';
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
 export default function App() {
@@ -32,6 +34,8 @@ export default function App() {
            <Route path="/order-confirmation" element={<OrderConfirmationPage/>}/>
           {/* <Route path="/checkout" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><CheckoutPage /></OrderGuard>} /> */}
           <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>}/>
+          <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>}/>  
+          <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage/></ProtectedRoute>}/>
         </Routes>
       </BrowserRouter>
       </AuthProvider>

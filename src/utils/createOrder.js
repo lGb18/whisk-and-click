@@ -30,6 +30,5 @@ export function createOrder({
     cake_config: cakeConfig || {},
     customization: customizationDraft || {},
     checkout_details: checkoutDraft || {},
-    status: "pending",
   };
 }

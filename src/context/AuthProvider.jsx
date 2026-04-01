@@ -4,10 +4,40 @@ import { supabase } from "../lib/supabaseClient";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const [profile, setProfile] = useState(null);
+  const [role, setRole] = useState("customer");
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authMessage, setAuthMessage] = useState("");
+
+  async function loadOwnProfile(currentUserId) {
+    if (!currentUserId) {
+      setProfile(null);
+      setRole("customer");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", currentUserId)
+      .single();
+
+    if (error) {
+      console.error("Profile load error:", error.message);
+      setProfile(null);
+      setRole("customer");
+      return;
+    }
+
+    setProfile(data);
+    setRole(data?.role ?? "customer");
+
+    console.log("loadOwnProfile userId:", currentUserId);
+    console.log("profile row:", data);
+    console.log("profile error:", error);
+  }
 
   async function ensureProfile(currentUser) {
     if (!currentUser) return;
@@ -41,18 +71,28 @@ export function AuthProvider({ children }) {
         setAuthMessage(error.message);
         setSession(null);
         setUser(null);
+        setProfile(null);
+        setRole("customer");
         setIsAuthLoading(false);
         return;
       }
 
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+      const sessionData = data?.session ?? null;
 
-      if (data.session?.user) {
-        await ensureProfile(data.session.user);
+      setSession(sessionData);
+      setUser(sessionData?.user ?? null);
+
+      if (sessionData?.user) {
+        await ensureProfile(sessionData.user);
+        await loadOwnProfile(sessionData.user.id);
+      } else {
+        setProfile(null);
+        setRole("customer");
       }
 
-      setIsAuthLoading(false);
+      if (isMounted) {
+        setIsAuthLoading(false);
+      }
     }
 
     loadSession();
@@ -60,12 +100,18 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
+      setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
         await ensureProfile(nextSession.user);
+        await loadOwnProfile(nextSession.user.id);
+      } else {
+        setProfile(null);
+        setRole("customer");
       }
+
+      setIsAuthLoading(false);
     });
 
     return () => {
@@ -115,6 +161,11 @@ export function AuthProvider({ children }) {
       setAuthMessage(error.message);
       throw error;
     }
+
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRole("customer");
   }
 
   const value = useMemo(
@@ -123,12 +174,14 @@ export function AuthProvider({ children }) {
       user,
       isAuthLoading,
       authMessage,
+      profile,
+      role,
       setAuthMessage,
       signUp,
       signIn,
       signOut,
     }),
-    [session, user, isAuthLoading, authMessage]
+    [session, user, isAuthLoading, authMessage, profile, role]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

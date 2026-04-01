@@ -1,0 +1,400 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import OrderStatusBadge from '../components/OrderStatusBadge';
+import OrderTimeline from '../components/OrderTimeline';
+import StatusUpdatePanel from '../components/StatusUpdatePanel';
+import { fetchOrderById } from '../utils/orderQueries';
+import { getStatusLabel } from '../utils/orderStatusConfig';
+import { useAuthSession } from '../hooks/useAuthSession';
+
+function formatDateTime(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return date.toLocaleString();
+}
+
+function DetailSection({ title, children }) {
+  return (
+    <section
+      style={{
+        display: 'grid',
+        gap: '12px',
+        padding: '18px',
+        borderRadius: '16px',
+        background: '#FFFFFF',
+        border: '1px solid #EEEEEE',
+      }}
+    >
+      <h2
+        style={{
+          margin: 0,
+          fontSize: '1.05rem',
+          color: '#333333',
+        }}
+      >
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function KeyValueGrid({ data }) {
+  const entries = Object.entries(data ?? {}).filter(
+    ([, value]) =>
+      value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      !(typeof value === 'object' && Object.keys(value).length === 0)
+  );
+
+  if (!entries.length) {
+    return <div style={{ color: '#666666' }}>No data available.</div>;
+  }
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gap: '10px',
+      }}
+    >
+      {entries.map(([key, value]) => (
+        <div
+          key={key}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '180px 1fr',
+            gap: '12px',
+            alignItems: 'start',
+            paddingBottom: '10px',
+            borderBottom: '1px solid #F3F3F3',
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 600,
+              color: '#444444',
+              textTransform: 'capitalize',
+            }}
+          >
+            {key.replace(/_/g, ' ')}
+          </div>
+
+          <div style={{ color: '#555555', whiteSpace: 'pre-wrap' }}>
+            {typeof value === 'object'
+              ? JSON.stringify(value, null, 2)
+              : String(value)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function OrderDetailsPage() {
+  const { orderId } = useParams();
+  const navigate = useNavigate();
+  const { role } = useAuthSession();
+    
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const canManageStatus = role === 'staff' || role === 'admin';
+
+  const loadOrder = useCallback(async () => {
+    if (!orderId) return;
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const data = await fetchOrderById(orderId);
+      setOrder(data);
+    } catch (error) {
+      setErrorMessage(error?.message ?? 'Failed to load order details.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  const sourceLabel = useMemo(() => {
+    if (!order?.reference_source) return '—';
+
+    if (order.reference_source === 'recommendation') {
+      return 'Recommendation';
+    }
+
+    if (order.reference_source === 'fallback_ai') {
+      return 'Fallback AI';
+    }
+
+    return order.reference_source;
+  }, [order]);
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: '24px', color: '#333333' }}>
+        Loading order details...
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div style={{ padding: '24px', display: 'grid', gap: '12px' }}>
+        <div
+          style={{
+            padding: '14px 16px',
+            borderRadius: '12px',
+            background: '#FDEDED',
+            color: '#B3261E',
+            border: '1px solid #F5C2C0',
+          }}
+        >
+          {errorMessage}
+        </div>
+
+        <button
+          onClick={() => navigate('/my-orders')}
+          style={{
+            width: 'fit-content',
+            padding: '10px 14px',
+            borderRadius: '10px',
+            border: 'none',
+            background: '#E25D4D',
+            color: '#FFFFFF',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Back to My Orders
+        </button>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div style={{ padding: '24px', color: '#333333' }}>
+        Order not found.
+      </div>
+    );
+  }
+
+  return (
+    
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#F9F7F4',
+        padding: '24px',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          display: 'grid',
+          gap: '20px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '16px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'grid', gap: '6px' }}>
+            <button
+              onClick={() => navigate('/my-orders')}
+              style={{
+                width: 'fit-content',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: '1px solid #DDDDDD',
+                background: '#FFFFFF',
+                color: '#333333',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Back to My Orders
+            </button>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: '1.8rem',
+                color: '#333333',
+              }}
+            >
+              Order Details
+            </h1>
+
+            <div style={{ color: '#666666' }}>
+              Order ID: {order.id}
+              {role}
+            </div>
+          </div>
+
+          <OrderStatusBadge status={order.status} />
+        </div>
+
+        <DetailSection title="Order Overview">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            <div
+              style={{
+                padding: '14px',
+                borderRadius: '12px',
+                background: '#FAFAFA',
+              }}
+            >
+              <div style={{ color: '#666666', marginBottom: '6px' }}>
+                Source
+              </div>
+              <div style={{ fontWeight: 600, color: '#333333' }}>
+                {sourceLabel}
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '14px',
+                borderRadius: '12px',
+                background: '#FAFAFA',
+              }}
+            >
+              <div style={{ color: '#666666', marginBottom: '6px' }}>
+                Created At
+              </div>
+              <div style={{ fontWeight: 600, color: '#333333' }}>
+                {formatDateTime(order.created_at)}
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '14px',
+                borderRadius: '12px',
+                background: '#FAFAFA',
+              }}
+            >
+              <div style={{ color: '#666666', marginBottom: '6px' }}>
+                Status Updated
+              </div>
+              <div style={{ fontWeight: 600, color: '#333333' }}>
+                {formatDateTime(order.status_updated_at)}
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '14px',
+                borderRadius: '12px',
+                background: '#FAFAFA',
+              }}
+            >
+              <div style={{ color: '#666666', marginBottom: '6px' }}>
+                Current Status
+              </div>
+              <div style={{ fontWeight: 600, color: '#333333' }}>
+                {getStatusLabel(order.status)}
+              </div>
+            </div>
+          </div>
+
+          {order.cancel_reason ? (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: '#FDEDED',
+                border: '1px solid #F5C2C0',
+                color: '#B3261E',
+              }}
+            >
+              <strong>Cancel Reason:</strong> {order.cancel_reason}
+            </div>
+          ) : null}
+        </DetailSection>
+
+        {canManageStatus ? (
+          <StatusUpdatePanel
+            orderId={order.id}
+            currentStatus={order.status}
+            onUpdated={loadOrder}
+          />
+        ) : null}
+
+        <DetailSection title="Status Timeline">
+          <OrderTimeline history={order.order_status_history ?? []} />
+        </DetailSection>
+
+        <DetailSection title="Reference Information">
+          {order.reference_source === 'fallback_ai' ? (
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {order.fallback_image_url ? (
+                <img
+                  src={order.fallback_image_url}
+                  alt="Fallback generated cake"
+                  style={{
+                    width: '100%',
+                    maxWidth: '420px',
+                    borderRadius: '14px',
+                    border: '1px solid #EEEEEE',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : null}
+
+              <KeyValueGrid
+                data={{
+                  reference_source: order.reference_source,
+                  fallback_prompt: order.fallback_prompt,
+                }}
+              />
+            </div>
+          ) : (
+            <KeyValueGrid
+              data={{
+                reference_source: order.reference_source,
+                cake_reference_id: order.cake_reference_id,
+              }}
+            />
+          )}
+        </DetailSection>
+
+        <DetailSection title="Cake Configuration">
+          <KeyValueGrid data={order.cake_config} />
+        </DetailSection>
+
+        <DetailSection title="Customization">
+          <KeyValueGrid data={order.customization} />
+        </DetailSection>
+
+        <DetailSection title="Checkout Details">
+          <KeyValueGrid data={order.checkout_details} />
+        </DetailSection>
+      </div>
+    </div>
+    
+  );
+}

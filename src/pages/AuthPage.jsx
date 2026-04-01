@@ -18,7 +18,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   async function handleSignUp() {
     setIsSubmitting(true);
     setAuthMessage("");
