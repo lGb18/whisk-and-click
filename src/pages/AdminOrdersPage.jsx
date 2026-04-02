@@ -4,6 +4,7 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import { fetchAllOrdersForAdmin } from '../utils/orderQueries';
 import { ORDER_STATUS } from '../utils/orderStatusConfig';
 import { useAuthSession } from '../hooks/useAuthSession';
+import AdminNav from "../components/AdminNav";
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -15,6 +16,9 @@ function formatDateTime(value) {
 }
 
 export default function AdminOrdersPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("all");
+
   const navigate = useNavigate();
   const { role, isAuthLoading } = useAuthSession();
 
@@ -54,9 +58,24 @@ export default function AdminOrdersPage() {
   }, [canAccess]);
 
   const filteredOrders = useMemo(() => {
-    if (statusFilter === 'all') return orders;
-    return orders.filter((order) => order.status === statusFilter);
-  }, [orders, statusFilter]);
+    return orders.filter((order) => {
+      const matchesStatus =
+        statusFilter === "all" ? true : order.status === statusFilter;
+
+      const matchesSource =
+        sourceFilter === "all" ? true : order.reference_source === sourceFilter;
+
+      const normalized = searchTerm.trim().toLowerCase();
+      const matchesSearch = normalized
+        ? (
+            order.id?.toLowerCase().includes(normalized) ||
+            order.user_id?.toLowerCase().includes(normalized)
+          )
+        : true;
+
+      return matchesStatus && matchesSource && matchesSearch;
+    });
+  }, [orders, statusFilter, sourceFilter, searchTerm]);
 
   if (isAuthLoading || isLoading) {
     return (
@@ -71,6 +90,7 @@ export default function AdminOrdersPage() {
   }
 
   return (
+    
     <div
       style={{
         minHeight: '100vh',
@@ -86,6 +106,7 @@ export default function AdminOrdersPage() {
           gap: '20px',
         }}
       >
+            <AdminNav />
         <div
           style={{
             display: 'flex',

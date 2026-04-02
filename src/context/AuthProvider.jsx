@@ -11,16 +11,23 @@ export function AuthProvider({ children }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authMessage, setAuthMessage] = useState("");
 
+  async function clearAuthState() {
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRole("customer");
+  }
+
   async function loadOwnProfile(currentUserId) {
     if (!currentUserId) {
       setProfile(null);
       setRole("customer");
-      return;
+      return null;
     }
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, full_name, email, role, is_active, created_at, updated_at, disabled_at")
       .eq("id", currentUserId)
       .single();
 
@@ -28,15 +35,12 @@ export function AuthProvider({ children }) {
       console.error("Profile load error:", error.message);
       setProfile(null);
       setRole("customer");
-      return;
+      return null;
     }
 
     setProfile(data);
     setRole(data?.role ?? "customer");
-
-    console.log("loadOwnProfile userId:", currentUserId);
-    console.log("profile row:", data);
-    console.log("profile error:", error);
+    return data;
   }
 
   async function ensureProfile(currentUser) {
@@ -48,6 +52,7 @@ export function AuthProvider({ children }) {
         {
           id: currentUser.id,
           full_name: currentUser.user_metadata?.full_name || null,
+          email: currentUser.email || null,
         },
         { onConflict: "id" }
       );
@@ -55,6 +60,24 @@ export function AuthProvider({ children }) {
     if (error) {
       console.error("Profile upsert error:", error.message);
     }
+  }
+
+  async function enforceActiveProfile(currentProfile) {
+    if (currentProfile && currentProfile.is_active === false) {
+      await supabase.auth.signOut();
+      await clearAuthState();
+      setAuthMessage("Your account is disabled. Contact an administrator.");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function reloadProfile() {
+    if (!user?.id) return null;
+    const profileData = await loadOwnProfile(user.id);
+    await enforceActiveProfile(profileData);
+    return profileData;
   }
 
   useEffect(() => {
@@ -69,10 +92,7 @@ export function AuthProvider({ children }) {
 
       if (error) {
         setAuthMessage(error.message);
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        setRole("customer");
+        await clearAuthState();
         setIsAuthLoading(false);
         return;
       }
@@ -84,7 +104,8 @@ export function AuthProvider({ children }) {
 
       if (sessionData?.user) {
         await ensureProfile(sessionData.user);
-        await loadOwnProfile(sessionData.user.id);
+        const profileData = await loadOwnProfile(sessionData.user.id);
+        await enforceActiveProfile(profileData);
       } else {
         setProfile(null);
         setRole("customer");
@@ -105,7 +126,8 @@ export function AuthProvider({ children }) {
 
       if (nextSession?.user) {
         await ensureProfile(nextSession.user);
-        await loadOwnProfile(nextSession.user.id);
+        const profileData = await loadOwnProfile(nextSession.user.id);
+        await enforceActiveProfile(profileData);
       } else {
         setProfile(null);
         setRole("customer");
@@ -162,10 +184,7 @@ export function AuthProvider({ children }) {
       throw error;
     }
 
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-    setRole("customer");
+    await clearAuthState();
   }
 
   const value = useMemo(
@@ -180,6 +199,7 @@ export function AuthProvider({ children }) {
       signUp,
       signIn,
       signOut,
+      reloadProfile,
     }),
     [session, user, isAuthLoading, authMessage, profile, role]
   );
