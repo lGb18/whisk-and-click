@@ -1,64 +1,48 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import OrderStatusBadge from '../components/OrderStatusBadge';
-import { fetchAllOrdersForAdmin } from '../utils/orderQueries';
-import { ORDER_STATUS } from '../utils/orderStatusConfig';
-import { useAuthSession } from '../hooks/useAuthSession';
-import AppNav from "../components/AppNav";
-
-function formatDateTime(value) {
-  if (!value) return '—';
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-
-  return date.toLocaleString();
-}
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AppShell from "../components/AppShell";
+import OrderSummaryCard from "../components/OrderSummaryCard";
+import {
+  EmptyStateCard,
+  ErrorStateCard,
+  LoadingStateCard,
+} from "../components/PageState";
+import { fetchAllOrdersForAdmin } from "../utils/orderQueries";
+import { ORDER_STATUS } from "../utils/orderStatusConfig";
+import { useAuthSession } from "../hooks/useAuthSession";
 
 export default function AdminOrdersPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all");
-
   const navigate = useNavigate();
-  const { role, isAuthLoading, reloadProfile } = useAuthSession();
+  const { reloadProfile } = useAuthSession();
 
   const [orders, setOrders] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const canAccess = role === 'staff' || role === 'admin';
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     reloadProfile();
-    }, [reloadProfile]);
-  useEffect(() => {
-    if (isAuthLoading) return;
-
-    if (!canAccess) {
-      navigate('/my-orders', { replace: true });
-    }
-  }, [canAccess, isAuthLoading, navigate]);
+  }, [reloadProfile]);
 
   useEffect(() => {
-    if (!canAccess) return;
-
     async function loadOrders() {
       setIsLoading(true);
-      setErrorMessage('');
+      setErrorMessage("");
 
       try {
         const data = await fetchAllOrdersForAdmin();
         setOrders(data);
       } catch (error) {
-        setErrorMessage(error?.message ?? 'Failed to load admin orders.');
+        setErrorMessage(error?.message ?? "Failed to load admin orders.");
       } finally {
         setIsLoading(false);
       }
     }
 
     loadOrders();
-  }, [canAccess]);
+  }, []);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -80,184 +64,88 @@ export default function AdminOrdersPage() {
     });
   }, [orders, statusFilter, sourceFilter, searchTerm]);
 
-  if (isAuthLoading || isLoading) {
-    return (
-      <div style={{ padding: '24px', color: '#333333' }}>
-        Loading admin orders...
-      </div>
-    );
-  }
-
-  if (!canAccess) {
-    return null;
-  }
-
   return (
-    
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#F9F7F4',
-        padding: '24px',
-      }}
+    <AppShell
+      title="Admin Orders"
+      subtitle="Review and track all customer orders."
     >
       <div
         style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'grid',
-          gap: '20px',
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+          alignItems: "center",
         }}
       >
-            <AppNav />
-        <div
+        <input
+          type="text"
+          placeholder="Search by order id or user id"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-            alignItems: 'center',
+            minWidth: "260px",
+            padding: "10px 12px",
+            borderRadius: "10px",
+            border: "1px solid #D8D8D8",
+            background: "#FFFFFF",
+          }}
+        />
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{
+            minWidth: "180px",
+            padding: "10px 12px",
+            borderRadius: "10px",
+            border: "1px solid #D8D8D8",
+            background: "#FFFFFF",
           }}
         >
-          <div style={{ display: 'grid', gap: '6px' }}>
-            <h1
-              style={{
-                margin: 0,
-                color: '#333333',
-              }}
-            >
-              Admin Orders
-            </h1>
-            <div style={{ color: '#666666' }}>
-              Review and track all customer orders.
-            </div>
-          </div>
+          <option value="all">All Statuses</option>
+          {Object.values(ORDER_STATUS).map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
 
-          <div style={{ display: 'grid', gap: '6px' }}>
-            <label style={{ fontWeight: 500, color: '#444444' }}>
-              Filter by Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{
-                minWidth: '220px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: '1px solid #D8D8D8',
-                background: '#FFFFFF',
-              }}
-            >
-              <option value="all">All Statuses</option>
-              {Object.values(ORDER_STATUS).map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {errorMessage ? (
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: '12px',
-              background: '#FDEDED',
-              color: '#B3261E',
-              border: '1px solid #F5C2C0',
-            }}
-          >
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <div
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
           style={{
-            display: 'grid',
-            gap: '12px',
+            minWidth: "180px",
+            padding: "10px 12px",
+            borderRadius: "10px",
+            border: "1px solid #D8D8D8",
+            background: "#FFFFFF",
           }}
         >
-          {filteredOrders.length === 0 ? (
-            <div
-              style={{
-                padding: '18px',
-                borderRadius: '14px',
-                border: '1px solid #EAEAEA',
-                background: '#FFFFFF',
-                color: '#666666',
-              }}
-            >
-              No orders found for this filter.
-            </div>
-          ) : (
-            filteredOrders.map((order) => (
-              <div
-                key={order.id}
-                style={{
-                  display: 'grid',
-                  gap: '12px',
-                  padding: '18px',
-                  borderRadius: '16px',
-                  background: '#FFFFFF',
-                  border: '1px solid #ECECEC',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div style={{ display: 'grid', gap: '4px' }}>
-                    <div style={{ fontWeight: 700, color: '#333333' }}>
-                      Order {order.id}
-                    </div>
-                    <div style={{ color: '#666666' }}>
-                      User: {order.user_id}
-                    </div>
-                    <div style={{ color: '#666666' }}>
-                      Created: {formatDateTime(order.created_at)}
-                    </div>
-                    <div style={{ color: '#666666' }}>
-                      Source: {order.reference_source}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <OrderStatusBadge status={order.status} />
-
-                    <button
-                      onClick={() => navigate(`/orders/${order.id}`)}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: '#E25D4D',
-                        color: '#FFFFFF',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+          <option value="all">All Sources</option>
+          <option value="recommendation">Recommendation</option>
+          <option value="fallback_ai">Fallback AI</option>
+        </select>
       </div>
-    </div>
+
+      {errorMessage ? <ErrorStateCard message={errorMessage} /> : null}
+
+      {isLoading ? (
+        <LoadingStateCard message="Loading admin orders..." />
+      ) : filteredOrders.length === 0 ? (
+        <EmptyStateCard message="No orders found for this filter." />
+      ) : (
+        <div style={{ display: "grid", gap: "12px" }}>
+          {filteredOrders.map((order) => (
+            <OrderSummaryCard
+              key={order.id}
+              order={order}
+              onViewDetails={(selectedOrder) =>
+                navigate(`/orders/${selectedOrder.id}`)
+              }
+            />
+          ))}
+        </div>
+      )}
+    </AppShell>
   );
 }

@@ -31,7 +31,7 @@ export default function App() {
           <Route path="/wizard" element={<WizardPage />} />
           <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true }} redirectTo = "/wizard"><SummaryPage /></OrderGuard>} />
           <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true}} redirectTo = "/wizard"><RecommendationsPage /></OrderGuard>} />
-          <Route path="/auth" element={<AuthPage mode="customer" />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/my-orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>}/>
           <Route path="/fallback" element={<GeneratorPage />} />
           {/* <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} /> */}
@@ -42,7 +42,7 @@ export default function App() {
           <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>}/>  
           <Route path="/admin/orders" element={<ProtectedRoute><RoleGuard allow={["staff", "admin"]}><AdminOrdersPage/></RoleGuard></ProtectedRoute>}/>
           <Route path="/admin/users" element={ <ProtectedRoute><RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard></ProtectedRoute>}/>
-          <Route path="/admin/login" element={<Navigate to="/auth" />} />
+          <Route path="/admin/login" element={<Navigate to="/auth" replace />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}/>
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>}/>
         </Routes>

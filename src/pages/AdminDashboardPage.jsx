@@ -1,67 +1,44 @@
 import { useNavigate } from "react-router-dom";
-import AppNav from "../components/AppNav";
+import AppShell from "../components/AppShell";
 import DashboardShortcutCard from "../components/DashboardShortcutCard";
 import { useAuthSession } from "../hooks/useAuthSession";
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { profile, user } = useAuthSession();
-  const displayName =
-    profile?.full_name || user?.email || "Admin";
+
+  const displayName = profile?.full_name || user?.email || "Admin";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#F9F7F4",
-        padding: "24px",
-      }}
+    <AppShell
+      title="Admin Dashboard"
+      subtitle={`Welcome, ${displayName}. Access admin operations, users, and account controls.`}
     >
       <div
         style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
           display: "grid",
-          gap: "20px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "14px",
         }}
       >
-        <AppNav />
+        <DashboardShortcutCard
+          title="Manage Orders"
+          description="Open the internal order operations page and review tracked orders."
+          onClick={() => navigate("/admin/orders")}
+        />
 
-        <div style={{ display: "grid", gap: "6px" }}>
-          <h1 style={{ margin: 0, color: "#333333" }}>
-            Admin Dashboard
-          </h1>
-          <div style={{ color: "#666666" }}>
-            Welcome, {displayName}. Access admin operations, users, and account controls.
-          </div>
-        </div>
+        <DashboardShortcutCard
+          title="Manage Users"
+          description="Update roles, access state, and internal account operations."
+          onClick={() => navigate("/admin/users")}
+        />
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "14px",
-          }}
-        >
-          <DashboardShortcutCard
-            title="Manage Orders"
-            description="Open the internal order operations page and review tracked orders."
-            onClick={() => navigate("/admin/orders")}
-          />
-
-          <DashboardShortcutCard
-            title="Manage Users"
-            description="Update roles, control application access, and review administrative user operations."
-            onClick={() => navigate("/admin/users")}
-          />
-
-          <DashboardShortcutCard
-            title="Go to Account"
-            description="Review your profile details and sign out securely."
-            onClick={() => navigate("/account")}
-          />
-        </div>
+        <DashboardShortcutCard
+          title="Go to Account"
+          description="Review your account details and sign out securely."
+          onClick={() => navigate("/account")}
+        />
       </div>
-    </div>
+    </AppShell>
   );
 }
