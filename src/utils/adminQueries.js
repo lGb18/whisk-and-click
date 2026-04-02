@@ -11,23 +11,33 @@ export async function fetchAllProfiles() {
 }
 
 export async function updateUserRole({ targetUserId, newRole, note = "" }) {
-  const { data, error } = await supabase.rpc("set_user_role", {
-    p_target_user_id: targetUserId,
-    p_new_role: newRole,
-    p_note: note,
+  const { data, error } = await supabase.functions.invoke("admin-user-control", {
+    body: {
+      action: "set_role",
+      targetUserId,
+      newRole,
+      note,
+    },
   });
 
   if (error) throw error;
-  return data;
+  if (data?.error) throw new Error(data.error);
+
+  return data?.data;
 }
 
 export async function updateUserAccessState({ targetUserId, isActive, note = "" }) {
-  const { data, error } = await supabase.rpc("set_user_access_state", {
-    p_target_user_id: targetUserId,
-    p_is_active: isActive,
-    p_note: note,
+  const { data, error } = await supabase.functions.invoke("admin-user-control", {
+    body: {
+      action: "set_access_state",
+      targetUserId,
+      isActive,
+      note,
+    },
   });
 
   if (error) throw error;
-  return data;
+  if (data?.error) throw new Error(data.error);
+
+  return data?.data;
 }

@@ -17,8 +17,11 @@ import AdminOrdersPage from './pages/AdminOrdersPage';
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import AdminUsersPage from "./pages/AdminUsersPage";
 import RoleGuard from "./components/RoleGuard";
-
+import DashboardPage from "./pages/DashboardPage";
+import AccountPage from "./pages/AccountPage";
+import { Navigate } from "react-router-dom";
 export default function App() {
+  
   return (
     <AppFlowProvider>
       <AuthProvider>
@@ -39,7 +42,9 @@ export default function App() {
           <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>}/>  
           <Route path="/admin/orders" element={<ProtectedRoute><RoleGuard allow={["staff", "admin"]}><AdminOrdersPage/></RoleGuard></ProtectedRoute>}/>
           <Route path="/admin/users" element={ <ProtectedRoute><RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard></ProtectedRoute>}/>
-          <Route path="/admin/login" element={<AuthPage mode="management" />} />
+          <Route path="/admin/login" element={<Navigate to="/auth" />} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}/>
+          <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>}/>
         </Routes>
       </BrowserRouter>
       </AuthProvider>

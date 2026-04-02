@@ -4,7 +4,7 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import { fetchAllOrdersForAdmin } from '../utils/orderQueries';
 import { ORDER_STATUS } from '../utils/orderStatusConfig';
 import { useAuthSession } from '../hooks/useAuthSession';
-import AdminNav from "../components/AdminNav";
+import AppNav from "../components/AppNav";
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -20,7 +20,7 @@ export default function AdminOrdersPage() {
   const [sourceFilter, setSourceFilter] = useState("all");
 
   const navigate = useNavigate();
-  const { role, isAuthLoading } = useAuthSession();
+  const { role, isAuthLoading, reloadProfile } = useAuthSession();
 
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -29,6 +29,9 @@ export default function AdminOrdersPage() {
 
   const canAccess = role === 'staff' || role === 'admin';
 
+  useEffect(() => {
+    reloadProfile();
+    }, [reloadProfile]);
   useEffect(() => {
     if (isAuthLoading) return;
 
@@ -106,7 +109,7 @@ export default function AdminOrdersPage() {
           gap: '20px',
         }}
       >
-            <AdminNav />
+            <AppNav />
         <div
           style={{
             display: 'flex',

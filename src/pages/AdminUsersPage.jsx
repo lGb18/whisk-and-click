@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import AdminNav from "../components/AdminNav";
+import AppNav from "../components/AppNav";
 import RoleBadge from "../components/RoleBadge";
 import { fetchAllProfiles, updateUserAccessState, updateUserRole } from "../utils/adminQueries";
 import { useAuthSession } from "../hooks/useAuthSession";
@@ -7,7 +7,7 @@ import { useAuthSession } from "../hooks/useAuthSession";
 const ROLE_OPTIONS = ["customer", "staff", "admin"];
 
 export default function AdminUsersPage() {
-  const { user } = useAuthSession();
+  const { user, reloadProfile } = useAuthSession();
 
   const [profiles, setProfiles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +16,9 @@ export default function AdminUsersPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
 
+  useEffect(() => {
+    reloadProfile();
+    }, [reloadProfile]);
   async function loadProfiles() {
     setIsLoading(true);
     setErrorMessage("");
@@ -55,6 +58,18 @@ export default function AdminUsersPage() {
         newRole,
         note: getNote(targetUserId),
       });
+
+      setProfiles((prev) =>
+        prev.map((profile) =>
+          profile.id === targetUserId
+            ? {
+                ...profile,
+                role: newRole,
+              }
+            : profile
+        )
+      );
+
       await loadProfiles();
     } catch (error) {
       setErrorMessage(error?.message ?? "Failed to update user role.");
@@ -73,6 +88,19 @@ export default function AdminUsersPage() {
         isActive: nextState,
         note: getNote(targetUserId),
       });
+
+      setProfiles((prev) =>
+        prev.map((profile) =>
+          profile.id === targetUserId
+            ? {
+                ...profile,
+                is_active: nextState,
+                disabled_at: nextState ? null : new Date().toISOString(),
+              }
+            : profile
+        )
+      );
+
       await loadProfiles();
     } catch (error) {
       setErrorMessage(error?.message ?? "Failed to update user access state.");
@@ -115,7 +143,7 @@ export default function AdminUsersPage() {
           gap: "20px",
         }}
       >
-        <AdminNav />
+        <AppNav />
 
         <div style={{ display: "grid", gap: "6px" }}>
           <h1 style={{ margin: 0, color: "#333333" }}>Admin Users</h1>

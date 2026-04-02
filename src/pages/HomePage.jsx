@@ -23,7 +23,7 @@ export default function HomePage() {
           title="Whisk & Click"
           subtitle="Find personalized cake designs based on your preferences and shop-supported options."
         />
-        <PrimaryButton onClick={() => navigate("/wizard")}>
+        <PrimaryButton onClick={() => navigate("/auth")}>
           Start Designing
         </PrimaryButton>
       </div>

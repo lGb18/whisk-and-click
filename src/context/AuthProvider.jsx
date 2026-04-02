@@ -46,16 +46,20 @@ export function AuthProvider({ children }) {
   async function ensureProfile(currentUser) {
     if (!currentUser) return;
 
+    const payload = {
+      id: currentUser.id,
+      email: currentUser.email || null,
+    };
+
+    const metadataFullName = currentUser.user_metadata?.full_name?.trim();
+
+    if (metadataFullName) {
+      payload.full_name = metadataFullName;
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .upsert(
-        {
-          id: currentUser.id,
-          full_name: currentUser.user_metadata?.full_name || null,
-          email: currentUser.email || null,
-        },
-        { onConflict: "id" }
-      );
+      .upsert(payload, { onConflict: "id" });
 
     if (error) {
       console.error("Profile upsert error:", error.message);
@@ -203,6 +207,47 @@ export function AuthProvider({ children }) {
     }),
     [session, user, isAuthLoading, authMessage, profile, role]
   );
+  useEffect(() => {
+  if (!user?.id) return;
+
+  let cancelled = false;
+
+  async function revalidateProfileAccess() {
+      try {
+        const profileData = await loadOwnProfile(user.id);
+
+        if (cancelled) return;
+
+        await enforceActiveProfile(profileData);
+      } catch (error) {
+        console.error("Profile revalidation error:", error);
+      }
+    }
+
+    function handleWindowFocus() {
+      revalidateProfileAccess();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        revalidateProfileAccess();
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      revalidateProfileAccess();
+    }, 30000); // every 30 seconds
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user?.id]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

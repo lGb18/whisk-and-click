@@ -11,20 +11,16 @@ function genericSignupMessage() {
   return "Unable to create account with those details.";
 }
 
-export default function AuthPage({ mode = "customer" }) {
+export default function AuthPage() {
   const navigate = useNavigate();
   const {
     signIn,
     signUp,
     signOut,
-    role,
-    profile,
-    isAuthLoading,
     user,
+    isAuthLoading,
     reloadProfile,
   } = useAuthSession();
-
-  const isManagementMode = mode === "management";
 
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -33,19 +29,12 @@ export default function AuthPage({ mode = "customer" }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isManagementMode) {
-      setIsRegister(false);
-    }
-  }, [isManagementMode]);
-
-  useEffect(() => {
     if (isAuthLoading) return;
 
-    // Only auto-redirect management users if they are already privileged.
-    if (isManagementMode && (role === "staff" || role === "admin")) {
-      navigate("/admin/orders", { replace: true });
+    if (user) {
+      navigate("/dashboard", { replace: true });
     }
-  }, [isAuthLoading, isManagementMode, role, navigate]);
+  }, [isAuthLoading, user, navigate]);
 
   async function fetchCurrentProfile(currentUserId) {
     const { data, error } = await supabase
@@ -64,9 +53,9 @@ export default function AuthPage({ mode = "customer" }) {
     setIsSubmitting(true);
 
     try {
-      if (isRegister && !isManagementMode) {
+      if (isRegister) {
         await signUp({ email, password });
-        navigate("/my-orders", { replace: true });
+        navigate("/dashboard", { replace: true });
         return;
       }
 
@@ -87,20 +76,9 @@ export default function AuthPage({ mode = "customer" }) {
         return;
       }
 
-      if (isManagementMode) {
-        if (currentProfile?.role !== "staff" && currentProfile?.role !== "admin") {
-          await signOut();
-          setLocalError("Management access is not available for this account.");
-          return;
-        }
-
-        navigate("/admin/orders", { replace: true });
-        return;
-      }
-
-      navigate("/my-orders", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      if (isRegister && !isManagementMode) {
+      if (isRegister) {
         setLocalError(genericSignupMessage());
       } else {
         setLocalError(genericInvalidCredentialsMessage());
@@ -109,25 +87,6 @@ export default function AuthPage({ mode = "customer" }) {
       setIsSubmitting(false);
     }
   }
-
-  async function handleCustomerSignOut() {
-    setLocalError("");
-    setIsSubmitting(true);
-
-    try {
-      await signOut();
-      navigate("/auth", { replace: true });
-    } catch (error) {
-      setLocalError(error?.message ?? "Failed to sign out.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  const pageTitle = isManagementMode ? "Management Login" : "Account Access";
-  const pageSubtitle = isManagementMode
-    ? "Sign in with a staff or admin account."
-    : "Sign in or create an account to continue.";
 
   if (isAuthLoading) {
     return (
@@ -157,127 +116,6 @@ export default function AuthPage({ mode = "customer" }) {
     );
   }
 
-  // Customer mode: if already signed in, show account panel instead of bouncing away.
-  if (!isManagementMode && user) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#F9F7F4",
-          display: "grid",
-          placeItems: "center",
-          padding: "24px",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "460px",
-            display: "grid",
-            gap: "18px",
-            background: "#FFFFFF",
-            border: "1px solid #ECECEC",
-            borderRadius: "18px",
-            padding: "24px",
-          }}
-        >
-          <div style={{ display: "grid", gap: "6px" }}>
-            <h1 style={{ margin: 0, color: "#333333" }}>Account Access</h1>
-            <div style={{ color: "#666666" }}>
-              You are already signed in.
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gap: "8px",
-              padding: "16px",
-              borderRadius: "12px",
-              background: "#FAFAFA",
-              border: "1px solid #EEEEEE",
-            }}
-          >
-            <div style={{ color: "#333333" }}>
-              <strong>Email:</strong> {profile?.email || user?.email || "—"}
-            </div>
-            <div style={{ color: "#333333" }}>
-              <strong>Role:</strong> {role || "customer"}
-            </div>
-          </div>
-
-          {localError ? (
-            <div
-              style={{
-                padding: "12px 14px",
-                borderRadius: "10px",
-                background: "#FDEDED",
-                color: "#B3261E",
-                border: "1px solid #F5C2C0",
-              }}
-            >
-              {localError}
-            </div>
-          ) : null}
-
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => navigate("/my-orders")}
-              style={{
-                padding: "12px 16px",
-                borderRadius: "10px",
-                border: "none",
-                background: "#E25D4D",
-                color: "#FFFFFF",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Go to My Orders
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCustomerSignOut}
-              disabled={isSubmitting}
-              style={{
-                padding: "12px 16px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: "#FFFFFF",
-                color: "#333333",
-                fontWeight: 600,
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                opacity: isSubmitting ? 0.7 : 1,
-              }}
-            >
-              {isSubmitting ? "Signing out..." : "Sign Out"}
-            </button>
-          </div>
-
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => navigate("/admin/login")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: "#FFFFFF",
-                color: "#333333",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Management Login
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
@@ -301,45 +139,45 @@ export default function AuthPage({ mode = "customer" }) {
         }}
       >
         <div style={{ display: "grid", gap: "6px" }}>
-          <h1 style={{ margin: 0, color: "#333333" }}>{pageTitle}</h1>
-          <div style={{ color: "#666666" }}>{pageSubtitle}</div>
+          <h1 style={{ margin: 0, color: "#333333" }}>Account Access</h1>
+          <div style={{ color: "#666666" }}>
+            Sign in or create an account to continue.
+          </div>
         </div>
 
-        {!isManagementMode ? (
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setIsRegister(false)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: !isRegister ? "#E25D4D" : "#FFFFFF",
-                color: !isRegister ? "#FFFFFF" : "#333333",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Sign In
-            </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => setIsRegister(false)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: "10px",
+              border: "1px solid #DDDDDD",
+              background: !isRegister ? "#E25D4D" : "#FFFFFF",
+              color: !isRegister ? "#FFFFFF" : "#333333",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Sign In
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setIsRegister(true)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: isRegister ? "#E25D4D" : "#FFFFFF",
-                color: isRegister ? "#FFFFFF" : "#333333",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Create Account
-            </button>
-          </div>
-        ) : null}
+          <button
+            type="button"
+            onClick={() => setIsRegister(true)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: "10px",
+              border: "1px solid #DDDDDD",
+              background: isRegister ? "#E25D4D" : "#FFFFFF",
+              color: isRegister ? "#FFFFFF" : "#333333",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Create Account
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "12px" }}>
           <input
@@ -402,47 +240,11 @@ export default function AuthPage({ mode = "customer" }) {
           >
             {isSubmitting
               ? "Please wait..."
-              : isRegister && !isManagementMode
+              : isRegister
               ? "Create Account"
               : "Sign In"}
           </button>
         </form>
-
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {!isManagementMode ? (
-            <button
-              type="button"
-              onClick={() => navigate("/admin/login")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: "#FFFFFF",
-                color: "#333333",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Management Login
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate("/auth")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                border: "1px solid #DDDDDD",
-                background: "#FFFFFF",
-                color: "#333333",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Back to Customer Login
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
