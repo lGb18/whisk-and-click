@@ -27,9 +27,6 @@ export default function AccountPage() {
     setFullName(profile?.full_name || "");
   }, [profile]);
 
-  useEffect(() => {
-    reloadProfile();
-  }, [reloadProfile]);
 
   async function handleSave(event) {
     event.preventDefault();

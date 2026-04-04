@@ -23,8 +23,9 @@ import { Navigate } from "react-router-dom";
 export default function App() {
   
   return (
-    <AppFlowProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <AppFlowProvider>
+      
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -47,7 +48,8 @@ export default function App() {
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>}/>
         </Routes>
       </BrowserRouter>
-      </AuthProvider>
-    </AppFlowProvider>
+      
+      </AppFlowProvider>
+    </AuthProvider>
   );
 }

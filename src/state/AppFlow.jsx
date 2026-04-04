@@ -1,9 +1,34 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect  } from "react";
 
 const AppFlowContext = createContext();
 
+function useLocalStorage(key, initialValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const storedValue = localStorage.getItem(key);
+      return storedValue ? JSON.parse(storedValue) : initialValue;
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error);
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (state === undefined || state === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(state));
+      }
+    } catch (error) {
+      console.error(`Error setting localStorage key "${key}":`, error);
+    }
+  }, [key, state]);
+
+  return [state, setState];
+}
 export function AppFlowProvider({ children }) {
-  const [cakeConfig, setCakeConfig] = useState({
+  const [cakeConfig, setCakeConfig] = useLocalStorage("app_cakeConfig", {
     occasion: "",
     flavor: "",
     style: "",
@@ -16,7 +41,7 @@ export function AppFlowProvider({ children }) {
     // shape: "Round"
   });
 
-  const [customizationDraft, setCustomizationDraft] = useState({
+  const [customizationDraft, setCustomizationDraft] = useLocalStorage("app_customizationDraft", {
     colorTheme: "",
     cakeMessage: "",
     sizeAdjustment: "",
@@ -24,7 +49,7 @@ export function AppFlowProvider({ children }) {
     specialInstructions: "",
   });
 
-  const [checkoutDraft, setCheckoutDraft] = useState({
+  const [checkoutDraft, setCheckoutDraft] = useLocalStorage("app_checkoutDraft", {
     fullName: "",
     contactNumber: "",
     fulfillmentType: "",
@@ -37,17 +62,17 @@ export function AppFlowProvider({ children }) {
     paymentReference: "",
   });
 
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useLocalStorage("app_chatHistory", []);
   
-  const [recommendations, setRecommendations] = useState({});
-  const [selectedCake, setSelectedCake] = useState(null);
+  const [recommendations, setRecommendations] = useLocalStorage("app_recommendations", {});
+  const [selectedCake, setSelectedCake] = useLocalStorage("app_selectedCake", null);
   const [createdOrder, setCreatedOrder] = useState(null);
   
-  const [fallbackPrompt, setFallbackPrompt] = useState("");
-  const [fallbackStatus, setFallbackStatus] = useState("");
-  const [fallbackResult, setFallbackResult] = useState({});
-  const [fallbackError, setFallbackError] = useState("");
-  const [selectedFallback, setSelectedFallback] = useState({});
+  const [fallbackPrompt, setFallbackPrompt] = useLocalStorage("app_fallbackPrompt", "");
+  const [fallbackStatus, setFallbackStatus] = useLocalStorage("app_fallbackStatus", "");
+  const [fallbackResult, setFallbackResult] = useLocalStorage("app_fallbackResult", {});
+  const [fallbackError, setFallbackError] = useLocalStorage("app_fallbackError", "");
+  const [selectedFallback, setSelectedFallback] = useLocalStorage("app_selectedFallback", {});
   // const [placeOrder, setPlaceOrder] = useState(null);
 
   
@@ -70,17 +95,13 @@ export function AppFlowProvider({ children }) {
     setSelectedCake(null);
     setCreatedOrder(null);
     setCustomizationDraft({
-      fullName: "",
-      contactNumber: "",
-      fulfillmentType: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      region: "",
-      postalCode: "",
-      paymentMethod: "",
-      paymentReference: "",
+      colorTheme: "",
+      cakeMessage: "",
+      sizeAdjustment: "",
+      topperPreference: "",
+      specialInstructions: "",
     });
+
     setCheckoutDraft({
       fullName: "",
       contactNumber: "",
@@ -93,12 +114,25 @@ export function AppFlowProvider({ children }) {
       paymentMethod: "",
       paymentReference: "",
     });
-    // setPlaceOrder(null);
+
     setFallbackPrompt("");
     setFallbackStatus("");
     setFallbackResult({});
     setFallbackError("");
     setSelectedFallback({});
+
+    // Wipe local storage so the user starts totally fresh next time
+    localStorage.removeItem("app_cakeConfig");
+    localStorage.removeItem("app_customizationDraft");
+    localStorage.removeItem("app_checkoutDraft");
+    localStorage.removeItem("app_chatHistory");
+    localStorage.removeItem("app_recommendations");
+    localStorage.removeItem("app_selectedCake");
+    localStorage.removeItem("app_fallbackPrompt");
+    localStorage.removeItem("app_fallbackStatus");
+    localStorage.removeItem("app_fallbackResult");
+    localStorage.removeItem("app_fallbackError");
+    localStorage.removeItem("app_selectedFallback");
   }
 
   return (
@@ -136,5 +170,9 @@ export function AppFlowProvider({ children }) {
 }
 
 export function useAppFlow() {
-  return useContext(AppFlowContext);
+  const context = useContext(AppFlowContext);
+    if (!context) {
+      throw new Error("useAppFlow must be used within AppFlowProvider");
+    }
+    return context;
 }

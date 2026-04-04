@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext(null);
@@ -11,6 +11,13 @@ export function AuthProvider({ children }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authMessage, setAuthMessage] = useState("");
 
+  const lastProfileLoadRef = useRef(null);
+  const STALE_THRESHOLD_MS = 60_000;
+
+  function isProfileStale() {
+    if (!lastProfileLoadRef.current) return true;
+    return Date.now() - lastProfileLoadRef.current > STALE_THRESHOLD_MS;
+  }
   async function clearAuthState() {
     setSession(null);
     setUser(null);
@@ -40,6 +47,7 @@ export function AuthProvider({ children }) {
 
     setProfile(data);
     setRole(data?.role ?? "customer");
+    lastProfileLoadRef.current = Date.now();
     return data;
   }
 
@@ -79,6 +87,8 @@ export function AuthProvider({ children }) {
 
   async function reloadProfile() {
     if (!user?.id) return null;
+    if (!force && !isProfileStale()) return profile;
+
     const profileData = await loadOwnProfile(user.id);
     await enforceActiveProfile(profileData);
     return profileData;
@@ -213,6 +223,7 @@ export function AuthProvider({ children }) {
   let cancelled = false;
 
   async function revalidateProfileAccess() {
+    if (!isProfileStale()) return;
       try {
         const profileData = await loadOwnProfile(user.id);
 

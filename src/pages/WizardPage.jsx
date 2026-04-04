@@ -19,7 +19,8 @@ export default function WizardPage() {
     setChatHistory
   } = useAppFlow();
   
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const currentQuestionIndex = Math.floor((chatHistory?.length || 0) / 2);
+  const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
     if (chatHistory.length === 0) {
@@ -32,11 +33,9 @@ export default function WizardPage() {
     }
   }, [chatHistory, setChatHistory]);
 
-  const currentQuestion = questions[currentQuestionIndex];
-  function clearLoad(){
-    setChatHistory([])
-  }
   function handleAnswer(option) {
+    if (!currentQuestion) return;
+
     const key = currentQuestion.key;
 
     setCakeConfig((prev) => ({
@@ -50,36 +49,63 @@ export default function WizardPage() {
     ];
 
     const nextIndex = currentQuestionIndex + 1;
-    console.log(updatedHistory)
+    
     if (nextIndex < questions.length) {
       updatedHistory.push({
         role: "system",
         text: questions[nextIndex].question
       });
-      setCurrentQuestionIndex(nextIndex);
       setChatHistory(updatedHistory);
     } else {
       setChatHistory(updatedHistory);
       navigate("/summary");
-      setChatHistory([]);
+
     }
   }
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
+
   return (
-    <div className="page-shell" >
-      <div className="container-narrow" style={{ maxWidth: "820px", height:"80vh", display: "flex", flexDirection: "column", gap: "24px" , boxShadow: "0px 10px 22px rgba(0, 0, 0, 0.08)", padding: "10px", borderRadius: "16px", backgroundColor: "#F9F7F4"}}>
+    <div className="page-shell">
+      <div 
+        className="container-narrow" 
+        style={{ 
+          maxWidth: "820px", 
+          height: "80vh", 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: "24px", 
+          boxShadow: "0px 10px 22px rgba(0, 0, 0, 0.08)", 
+          padding: "10px", 
+          borderRadius: "16px", 
+          backgroundColor: "#F9F7F4"
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <span style={{ color: "var(--text-secondary)", fontSize: "13px" }}>Step 1 of 3</span>
+          {/* Dynamically show step numbers based on total questions */}
+          <span style={{ color: "var(--text-secondary)", fontSize: "13px" }}>
+            Step {Math.min(currentQuestionIndex + 1, questions.length)} of {questions.length}
+          </span>
           <PageHeader
             title="Let’s design your cake"
             subtitle="Please select"
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "40vh" , overflowY: "auto", backgroundColor: "#FFFFFF", padding: "10px", borderRadius: "10px"}}>
+        <div 
+          style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "16px", 
+            height: "40vh", 
+            overflowY: "auto", 
+            backgroundColor: "#FFFFFF", 
+            padding: "10px", 
+            borderRadius: "10px"
+          }}
+        >
           {chatHistory.map((item, index) =>
             item.role === "system" ? (
               <ChatBubbleSystem key={index} text={item.text} />
@@ -89,8 +115,20 @@ export default function WizardPage() {
           )}
           <div ref={chatEndRef} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", minHeight:"80px", backgroundColor: "#FCE7C6", borderRadius: "10px", padding: "10px", justifyContent: "center", alignItems: "center" }}>
-          {currentQuestion && (
+
+        <div 
+          style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            minHeight: "80px", 
+            backgroundColor: "#FCE7C6", 
+            borderRadius: "10px", 
+            padding: "10px", 
+            justifyContent: "center", 
+            alignItems: "center" 
+          }}
+        >
+          {currentQuestion ? (
             <div style={{ display: "flex", flexGrow: "1", gap: "24px", flexDirection: "column", minHeight: "68px", justifyContent: "center"}}>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignContent: "flex-start"}}>
                 {currentQuestion.options.map((option) => (
@@ -98,14 +136,21 @@ export default function WizardPage() {
                     {option}
                   </ChatOptionButton>
                 ))}
-                </div>
+              </div>
             </div>
+          ) : (
+             <div style={{ color: "#888" }}>All questions answered.</div>
           )}
         </div>
+
         <div style={{ display: "flex", gap: "16px", padding: "10px", flexDirection: "row" , justifyContent: "flex-end"}}>
           <div style={{ display: "flex", gap: "16px" }}>
-            <SecondaryButton onClick={(event) => {navigate("/"); clearLoad();}}>Back</SecondaryButton>
-            <PrimaryButton onClick={() => {navigate("/summary"); clearLoad()}}>Skip to Summary</PrimaryButton>
+            <SecondaryButton onClick={() => navigate("/")}>
+              Back
+            </SecondaryButton>
+            <PrimaryButton onClick={() => navigate("/summary")}>
+              Skip to Summary
+            </PrimaryButton>
           </div>
         </div>
       </div>

@@ -41,9 +41,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  useEffect(() => {
-    reloadProfile();
-  }, [reloadProfile]);
 
   useEffect(() => {
     loadProfiles();

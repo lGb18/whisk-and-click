@@ -10,6 +10,9 @@ import { ErrorStateCard, LoadingStateCard } from "../components/PageState";
 import { fetchOrderById } from "../utils/orderQueries";
 import { getStatusLabel } from "../utils/orderStatusConfig";
 import { useAuthSession } from "../hooks/useAuthSession";
+import PaymentSummaryCard from "../components/PaymentSummaryCard";
+import PaymentReviewPanel from "../components/PaymentReviewPanel";
+import { fetchPaymentByOrderId, getPaymentProofSignedUrl } from "../utils/paymentQueries";
 
 function formatDateTime(value) {
   if (!value) return "—";
@@ -71,11 +74,16 @@ function KeyValueGrid({ data }) {
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  // Ensure useAuthSession is properly imported in your actual file
   const { role, reloadProfile } = useAuthSession();
 
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // 1. ADDED PAYMENT STATE HERE (inside the component)
+  const [payment, setPayment] = useState(null);
+  const [paymentProofUrl, setPaymentProofUrl] = useState("");
 
   const canManageStatus = role === "staff" || role === "admin";
 
@@ -86,6 +94,7 @@ export default function OrderDetailsPage() {
     setErrorMessage("");
 
     try {
+      // Ensure fetchOrderById is imported at the top of your file
       const data = await fetchOrderById(orderId);
       setOrder(data);
     } catch (error) {
@@ -95,13 +104,30 @@ export default function OrderDetailsPage() {
     }
   }, [orderId]);
 
-  useEffect(() => {
-    reloadProfile();
-  }, [reloadProfile]);
+  // 2. MOVED loadPayment INSIDE THE COMPONENT (so it can access states & orderId)
+  const loadPayment = useCallback(async () => {
+    if (!orderId) return;
+
+    try {
+      const paymentData = await fetchPaymentByOrderId(orderId);
+      setPayment(paymentData);
+
+      if (paymentData?.proof_path) {
+        const signedUrl = await getPaymentProofSignedUrl(paymentData.proof_path, 3600);
+        setPaymentProofUrl(signedUrl);
+      } else {
+        setPaymentProofUrl("");
+      }
+    } catch {
+      setPayment(null);
+      setPaymentProofUrl("");
+    }
+  }, [orderId]);
 
   useEffect(() => {
     loadOrder();
-  }, [loadOrder]);
+    loadPayment();
+  }, [loadOrder, loadPayment]); // Added loadPayment to dependency array
 
   const sourceLabel = useMemo(() => {
     if (!order?.reference_source) return "—";
@@ -214,7 +240,18 @@ export default function OrderDetailsPage() {
               }}
             />
           </SectionCard>
+          <SectionCard title="Payment">
+          <PaymentSummaryCard payment={payment} proofUrl={paymentProofUrl} />
+        </SectionCard>
 
+        {canManageStatus ? (
+          <SectionCard title="Payment Review">
+            <PaymentReviewPanel
+              payment={payment}
+              onReviewed={loadPayment}
+            />
+          </SectionCard>
+        ) : null}
           <SectionCard title="Cake Configuration">
             <KeyValueGrid data={order.cake_config} />
           </SectionCard>

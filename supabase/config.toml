@@ -397,3 +397,6 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.admin-user-control]
 verify_jwt = false
+
+[functions.payment-admin-control]
+verify_jwt = false

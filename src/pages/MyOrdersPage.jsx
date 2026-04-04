@@ -12,15 +12,12 @@ import { useAuthSession } from "../hooks/useAuthSession";
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
-  const { reloadProfile } = useAuthSession();
+  // const { reloadProfile } = useAuthSession();
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    reloadProfile();
-  }, [reloadProfile]);
 
   useEffect(() => {
     async function loadOrders() {

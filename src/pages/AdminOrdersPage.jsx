@@ -22,9 +22,6 @@ export default function AdminOrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    reloadProfile();
-  }, [reloadProfile]);
 
   useEffect(() => {
     async function loadOrders() {

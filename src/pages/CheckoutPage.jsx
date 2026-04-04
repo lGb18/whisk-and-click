@@ -5,6 +5,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import { useAppFlow } from "../state/AppFlow";
 import { createOrder } from "../utils/createOrder"
 import { supabase } from "../lib/supabaseClient";
+import { createPaymentForOrder, uploadPaymentProof } from "../utils/paymentQueries";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -17,15 +18,16 @@ export default function CheckoutPage() {
     setCreatedOrder,
     createdOrder,
     selectedFallback,
-    // resetFlow,
+    resetFlow,
   } = useAppFlow();
 
-  // useEffect(() => {
-  //   return () => {
-  //     resetFlow();
-  //   };
-  // }, []);
-
+  const [paymentDraft, setPaymentDraft] = useState({
+    paymentMethod: "cod",
+    referenceNumber: "",
+    proofFile: null,
+    notes: "",
+  });
+  
   useEffect(() => {
     if ((!selectedCake && !selectedFallback) || !cakeConfig) {
       navigate("/");
@@ -100,7 +102,7 @@ export default function CheckoutPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     if (isSubmitDisabled || !cakeConfig || (!selectedCake && !selectedFallback)) return;
-    
+
     setSubmitError("");
     setIsSubmitting(true);
 
@@ -133,11 +135,39 @@ export default function CheckoutPage() {
         throw new Error(error.message);
       }
 
-      setCreatedOrder(data);
+      // 2. Store the created order (we need its ID for payment)
+      const createdOrder = data;
+      setCreatedOrder(createdOrder);
+
+      // 3. Upload proof file if provided (only for non-COD methods)
+      let proofPath = "";
+
+      if (paymentDraft.proofFile && user?.id && createdOrder?.id) {
+        proofPath = await uploadPaymentProof({
+          userId: user.id,
+          orderId: createdOrder.id,
+          file: paymentDraft.proofFile,
+        });
+      }
+
+      // 4. Create the payment record linked to the order
+      await createPaymentForOrder({
+        orderId: createdOrder.id,
+        userId: user.id,
+        paymentMethod: paymentDraft.paymentMethod,
+        amount: null, // keep null unless you compute a final total
+        referenceNumber: paymentDraft.referenceNumber,
+        proofPath,
+        notes: paymentDraft.notes,
+      });
+      resetFlow();
+      // 5. Navigate only after both order + payment succeed
       navigate("/my-orders");
     } catch (error) {
       console.error(error);
-      setSubmitError(error.message || "We couldn’t finish the checkout just now. Please try again.");
+      setSubmitError(
+        error.message || "We couldn't finish the checkout just now. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -251,25 +281,75 @@ export default function CheckoutPage() {
 
             <fieldset className="form-section">
               <legend className="form-heading">Payment</legend>
+
+              <div className="button-toggle-group">
+                {[
+                  { value: "cod", label: "Cash on Delivery/Pickup" },
+                  { value: "gcash", label: "GCash" },
+                  { value: "bank_transfer", label: "Bank Transfer" },
+                  { value: "manual_other", label: "Other Manual" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`option-button ${paymentDraft.paymentMethod === option.value ? "selected" : ""}`}
+                    onClick={() =>
+                      setPaymentDraft((prev) => ({
+                        ...prev,
+                        paymentMethod: option.value,
+                      }))
+                    }
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              {paymentDraft.paymentMethod !== "cod" ? (
+                <>
+                  <label className="form-field">
+                    <span>Reference Number</span>
+                    <input
+                      type="text"
+                      value={paymentDraft.referenceNumber}
+                      onChange={(e) =>
+                        setPaymentDraft((prev) => ({
+                          ...prev,
+                          referenceNumber: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter payment reference number"
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Payment Proof</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setPaymentDraft((prev) => ({
+                          ...prev,
+                          proofFile: e.target.files?.[0] ?? null,
+                        }))
+                      }
+                    />
+                  </label>
+                </>
+              ) : null}
+
               <label className="form-field">
-                <span>Payment method</span>
-                <select
-                  value={formState.paymentMethod}
-                  onChange={handleChange("paymentMethod")}
-                >
-                  <option value="credit_card">Credit / Debit Card</option>
-                  <option value="cash_on_delivery">Cash on Delivery</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="digital_wallet">Digital Wallet</option>
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Payment confirmation (optional)</span>
+                <span>Payment Notes</span>
                 <input
                   type="text"
-                  value={formState.paymentReference}
-                  onChange={handleChange("paymentReference")}
-                  placeholder=""
+                  value={paymentDraft.notes}
+                  onChange={(e) =>
+                    setPaymentDraft((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                  placeholder="Optional payment note"
                 />
               </label>
             </fieldset>
