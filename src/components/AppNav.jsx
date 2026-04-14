@@ -16,13 +16,13 @@ export default function AppNav() {
     ],
     staff: [
       { label: "Dashboard", path: "/dashboard" },
-      { label: "Admin Orders", path: "/admin/orders" },
+      { label: "Orders Queue", path: "/admin/orders" },
       { label: "Account", path: "/account" },
     ],
     admin: [
       { label: "Dashboard", path: "/dashboard" },
-      { label: "Admin Orders", path: "/admin/orders" },
-      { label: "Admin Users", path: "/admin/users" },
+      { label: "All Orders", path: "/admin/orders" },
+      { label: "Manage Users", path: "/admin/users" },
       { label: "Account", path: "/account" },
     ],
   };
@@ -40,47 +40,53 @@ export default function AppNav() {
   }
 
   return (
-    <div
+    <nav
       style={{
         display: "flex",
-        gap: "10px",
+        gap: "var(--space-sm)",
         flexWrap: "wrap",
         alignItems: "center",
-        marginBottom: "20px",
+        borderBottom: "1px solid var(--border)",
+        paddingBottom: "var(--space-md)",
       }}
     >
-      {items.map((item) => (
-        <button
-          key={item.path}
-          onClick={() => navigate(item.path)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: "10px",
-            border: "1px solid #DDDDDD",
-            background: isActive(item.path) ? "#E25D4D" : "#FFFFFF",
-            color: isActive(item.path) ? "#FFFFFF" : "#333333",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          {item.label}
-        </button>
-      ))}
+      {/* Primary Navigation Tabs */}
+      <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+        {items.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="option-button" // Reuse your existing button class!
+              style={{
+                minWidth: "auto",
+                border: "none",
+                background: active ? "var(--primary)" : "transparent",
+                color: active ? "var(--surface)" : "var(--text-secondary)",
+                boxShadow: active ? "var(--shadow-card-soft)" : "none",
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
 
+      {/* Danger/Account Action - Pushed to the right */}
       <button
         onClick={handleSignOut}
+        className="secondary-button"
         style={{
-          padding: "10px 14px",
-          borderRadius: "10px",
-          border: "1px solid #DDDDDD",
-          background: "#FFFFFF",
-          color: "#333333",
-          cursor: "pointer",
-          fontWeight: 600,
+          marginLeft: "auto",
+          borderColor: "var(--border)",
+          color: "var(--text-secondary)",
+          minHeight: "40px", // slightly smaller than standard controls
+          padding: "8px 16px"
         }}
       >
         Sign Out
       </button>
-    </div>
+    </nav>
   );
 }

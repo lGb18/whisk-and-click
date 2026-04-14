@@ -2,86 +2,92 @@ import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import PrimaryButton from "../components/PrimaryButton";
+import { CAKE_IMAGES, HERO_SLIDES } from "../data/assets";
 
-// =========================
-// 1. SUB-COMPONENTS
-// =========================
-
-const CategoryCard = ({ title, color, imageUrl, onClick }) => (
+const CategoryCard = ({ title, imageUrl, onClick }) => (
   <button 
     className="category-card" 
+    onClick={onClick}
     style={{ 
-      backgroundColor: color,
-      borderRadius: "var(--radius-card)", // Strictly 16px
+      borderRadius: "var(--radius-card)", 
       border: "none",
-      height: "var(--layout-reco-card)", // Note: 380px might be too tall, adjust if needed!
-      minHeight: "240px",
-      padding: "var(--space-lg)",
+      height: "320px", 
       position: "relative",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
       justifyContent: "flex-end",
       cursor: "pointer",
-      textAlign: "left"
+      padding: "0", 
+      backgroundColor: "var(--surface-muted)",
+      boxShadow: "var(--shadow-card-soft)",
+      transition: "transform 0.3s ease, box-shadow 0.3s ease"
     }}
-    onClick={onClick}
   >
-    <h3 style={{ 
-      color: "var(--surface)", 
-      fontSize: "var(--font-h2-size)", // Using 24px per your spec
-      fontWeight: "var(--font-h2-weight)",
-      fontFamily: "var(--font-heading)",
-      margin: 0, 
-      zIndex: 2, 
-      whiteSpace: "pre-line" 
-    }}>
-      {title}
-    </h3>
+    {/* Background Image */}
     {imageUrl && (
       <img 
         src={imageUrl} 
-        alt={`${title.replace('\n', ' ')} illustration`} 
-        loading="lazy"
+        alt={`Category: ${title.replace('\n', ' ')}`} 
         style={{
           position: "absolute",
-          top: "-20px",
-          right: "-20px",
-          width: "180px",
-          height: "180px",
-          objectFit: "contain",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover", 
           zIndex: 1,
-          pointerEvents: "none"
+          transition: "transform 0.5s ease" 
         }}
       />
     )}
+
+    <div style={{
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "70%",
+      background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)",
+      zIndex: 2
+    }} />
+
+    {/* Text Content */}
+    <h3 style={{ 
+      color: "var(--surface)", 
+      fontSize: "var(--font-h2-size)", 
+      fontWeight: "var(--font-h2-weight)",
+      fontFamily: "var(--font-heading)",
+      margin: "var(--space-lg)", 
+      zIndex: 3, 
+      position: "relative",
+      whiteSpace: "pre-line",
+      textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+      textAlign: "left"
+    }}>
+      {title}
+    </h3>
   </button>
 );
 
 const CategorySkeleton = () => (
-  <div style={{ 
-    backgroundColor: "var(--surface-muted)", 
-    height: "240px", 
-    borderRadius: "var(--radius-card)",
-    padding: "var(--space-lg)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-end"
-  }}>
-    <div style={{ width: "60%", height: "24px", backgroundColor: "var(--border)", borderRadius: "4px", marginBottom: "8px" }} />
-    <div style={{ width: "40%", height: "24px", backgroundColor: "var(--border)", borderRadius: "4px" }} />
+  <div 
+    className="skeleton-pulse"
+    style={{ 
+      backgroundColor: "var(--surface-muted)", 
+      height: "320px",
+      borderRadius: "var(--radius-card)",
+      padding: "var(--space-lg)",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "flex-end"
+    }}
+  >
+    <div style={{ width: "60%", height: "28px", backgroundColor: "var(--border)", borderRadius: "4px", marginBottom: "8px" }} />
+    <div style={{ width: "40%", height: "28px", backgroundColor: "var(--border)", borderRadius: "4px" }} />
   </div>
 );
 
-// =========================
-// 2. HERO SECTION
-// =========================
-
-const HERO_SLIDES = [
-  { id: 1, src: "/assets/hero-cake-1.jpg", alt: "Elegant custom floral wedding cake" },
-  { id: 2, src: "/assets/hero-cake-2.jpg", alt: "Decadent chocolate drip birthday cake" },
-  { id: 3, src: "/assets/hero-cake-3.jpg", alt: "Modern minimalist buttercream cake" }
-];
 
 const HeroCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -95,27 +101,48 @@ const HeroCarousel = () => {
       maxWidth: "540px",
       aspectRatio: "4/5",
       backgroundColor: "var(--surface-muted)",
-      borderRadius: "var(--radius-card)", // 16px
+      borderRadius: "var(--radius-card)", 
       boxShadow: "var(--shadow-card)",
       position: "relative",
       overflow: "hidden",
-      display: "flex"
+      display: "flex",
+      margin: "0 auto"
     }}>
       <div style={{
         display: "flex",
         width: "100%",
         height: "100%",
         transform: `translateX(-${currentIndex * 100}%)`,
-        transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+        transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)"
       }}>
         {HERO_SLIDES.map((slide) => (
-          <img key={slide.id} src={slide.src} alt={slide.alt} style={{ width: "100%", height: "100%", objectFit: "cover", flexShrink: 0 }} loading="eager" />
+          <img 
+            key={slide.id} 
+            src={slide.src} 
+            alt={slide.alt} 
+            style={{ width: "100%", height: "100%", objectFit: "cover", flexShrink: 0 }} 
+           
+            loading={slide.id === 1 ? "eager" : "lazy"} 
+          />
         ))}
       </div>
 
-      <div style={{ position: "absolute", bottom: "var(--space-lg)", left: "0", width: "100%", display: "flex", justifyContent: "space-between", padding: "0 var(--space-lg)", pointerEvents: "none" }}>
-        <button type="button" onClick={prevSlide} className="carousel-button" aria-label="Previous image" style={{ pointerEvents: "auto", width: "48px", height: "48px", borderRadius: "50%", border: "none", backgroundColor: "var(--surface)", cursor: "pointer" }}>&#10094;</button>
-        <button type="button" onClick={nextSlide} className="carousel-button" aria-label="Next image" style={{ pointerEvents: "auto", width: "48px", height: "48px", borderRadius: "50%", border: "none", backgroundColor: "var(--surface)", cursor: "pointer" }}>&#10095;</button>
+      <div style={{ 
+        position: "absolute", 
+        bottom: "var(--space-lg)", 
+        left: "0", 
+        width: "100%", 
+        display: "flex", 
+        justifyContent: "space-between", 
+        padding: "0 var(--space-lg)", 
+        pointerEvents: "none" 
+      }}>
+        <button type="button" onClick={prevSlide} className="carousel-button" aria-label="Previous image" style={{ pointerEvents: "auto" }}>
+          &#10094;
+        </button>
+        <button type="button" onClick={nextSlide} className="carousel-button" aria-label="Next image" style={{ pointerEvents: "auto" }}>
+          &#10095;
+        </button>
       </div>
     </div>
   );
@@ -126,20 +153,32 @@ const HeroSection = ({ onStart, onBrowse }) => (
       display: "flex", 
       alignItems: "center", 
       justifyContent: "space-between", 
-      gap: "var(--space-2xl)", 
-      // STRICT 100vh fold minus padding to prevent double-scroll
-      minHeight: "calc(100vh - var(--space-2xl) * 2)", 
-      paddingTop: "var(--space-2xl)",
-      paddingBottom: "var(--space-2xl)",
-      margin: "32px auto"
+      gap: "var(--space-3xl)", 
+      flexWrap: "wrap",
+      minHeight: "max(600px, calc(100vh - var(--space-2xl) * 2))",
+      paddingTop: "var(--space-xl)",
+      paddingBottom: "var(--space-xl)",
+      margin: "var(--space-lg) auto"
     }}
   >
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-md)", alignItems: "flex-start", textAlign: "left" }}>
-      <span style={{ color: "var(--primary)", fontWeight: "600", fontSize: "var(--font-caption-size)", textTransform: "uppercase", letterSpacing: "1px" }}>
+    <div style={{ 
+      flex: "1 1 400px",
+      display: "flex", 
+      flexDirection: "column", 
+      gap: "var(--space-md)", 
+      alignItems: "flex-start", 
+      textAlign: "left" 
+    }}>
+      <span style={{ 
+        color: "var(--primary)", 
+        fontWeight: "600", 
+        fontSize: "var(--font-caption-size)", 
+        textTransform: "uppercase", 
+        letterSpacing: "1.5px" 
+      }}>
         Whisk & Click Bakery
       </span>
 
-      {/* Strictly using your H1 Typography Spec (32px / 600 Poppins) */}
       <h1 style={{ 
         fontSize: "var(--font-h1-size)", 
         fontWeight: "var(--font-h1-weight)",
@@ -151,28 +190,34 @@ const HeroSection = ({ onStart, onBrowse }) => (
         Design the perfect cake,<br/>baked just for you.
       </h1>
 
-      <p style={{ fontSize: "var(--font-body-size)", color: "var(--text-secondary)", lineHeight: "var(--font-body-line)", maxWidth: "480px", margin: 0 }}>
+      <p style={{ 
+        fontSize: "var(--font-body-size)", 
+        color: "var(--text-secondary)", 
+        lineHeight: "var(--font-body-line)", 
+        maxWidth: "480px", 
+        margin: "0 0 var(--space-sm) 0" 
+      }}>
         Find personalized cake designs based on your preferences, dietary needs, and our shop-supported flavors.
       </p>
 
-      <div style={{ display: "flex", gap: "var(--space-md)", marginTop: "var(--space-sm)" }}>
-        <button className="primary-button" onClick={onStart} style={{ minHeight: "var(--control-height)", padding: "0 var(--space-lg)" }}>
+      <div style={{ display: "flex", gap: "var(--space-md)", flexWrap: "wrap" }}>
+        <button className="primary-button" onClick={onStart}>
           Start Designing
         </button>
-        <button className="secondary-button" onClick={onBrowse} style={{ minHeight: "var(--control-height)", padding: "0 var(--space-lg)" }}>
+        <button className="secondary-button" onClick={onBrowse}>
           Shop Catalog
         </button>
       </div>
     </div>
 
-    <div style={{ flex: 1, position: "relative", display: "flex", justifyContent: "flex-end" }}>
+    <div style={{ flex: "1 1 400px", position: "relative" }}>
        <HeroCarousel />
     </div>
   </section>
 );
 
 // =========================
-// 3. MAIN COMPONENT
+// MAIN COMPONENT
 // =========================
 
 export default function HomePage() {
@@ -184,11 +229,26 @@ export default function HomePage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
+        await new Promise(resolve => setTimeout(resolve, 800)); 
         const data = [
-          { id: "savory", title: "Savory\nSnacks", color: "var(--success)", route: "/category/savory", imageUrl: "/assets/popcorn.png" },
-          { id: "sweet", title: "Sweet\nDonuts", color: "var(--warning)", route: "/category/sweet", imageUrl: "/assets/donut.png" },
-          { id: "chocolate", title: "Chocolate\nCookies", color: "var(--primary)", route: "/category/chocolate", imageUrl: "/assets/cookie.png" }
+          { 
+            id: "cake_00002", 
+            title: "Chocolate\nDrip Cake", 
+            route: "/best-sellers",
+            imageUrl: CAKE_IMAGES.CHOCO_DRIP
+          },
+          { 
+            id: "cake_00001", 
+            title: "Floral\nWedding Cake", 
+            route: "/best-sellers", 
+            imageUrl: CAKE_IMAGES.WEDDING_FLORAL 
+          },
+          { 
+            id: "cake_00004", 
+            title: "Savory\nSpecial", 
+            route: "/best-sellers", 
+            imageUrl: CAKE_IMAGES.SAVORY_SPECIAL 
+          }
         ];
         setCategories(data);
       } catch (err) {
@@ -201,16 +261,15 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="page-shell" style={{ padding: "0 var(--space-2xl)" }}>
-      {/* Strictly adhering to your 1320px Reco Grid layout */}
+    <main className="page-shell" style={{ padding: "0 var(--space-lg)" }}>
       <div style={{ maxWidth: "var(--layout-reco-grid)", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)" }}>
         
-        <HeroSection onStart={() => navigate("/auth")} onBrowse={() => navigate("/catalog")}  />
+        <HeroSection onStart={() => navigate("/wizard")} onBrowse={() => navigate("/catalog")}  />
 
-        {/* PROMO BANNER */}
         <button 
+          className="promo-banner card"
           style={{ 
-            backgroundColor: "var(--success)",
+            background: "linear-gradient(135deg, var(--primary) 0%, #C94C3E 100%)", 
             borderRadius: "var(--radius-card)",
             padding: "var(--space-xl) var(--space-2xl)",
             display: "flex",
@@ -218,45 +277,80 @@ export default function HomePage() {
             justifyContent: "space-between",
             border: "none",
             cursor: "pointer",
-            textAlign: "left"
+            textAlign: "left",
+            boxShadow: "var(--shadow-card)"
           }} 
           onClick={() => navigate("/promo")}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-            <h2 style={{ color: "var(--surface)", fontSize: "var(--font-h1-size)", fontFamily: "var(--font-heading)", margin: 0 }}>Buy 2 Get Free</h2>
-            <p style={{ color: "var(--surface)", opacity: 0.9, margin: 0, fontSize: "var(--font-body-size)" }}>7-12 February 2025</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            <h2 style={{ color: "var(--surface)", fontSize: "var(--font-h1-size)", fontFamily: "var(--font-heading)", margin: 0 }}>
+              Buy 2 Get 1 Free
+            </h2>
+            <p style={{ color: "var(--surface)", opacity: 0.9, margin: 0, fontSize: "var(--font-body-size)" }}>
+              Valentine's Special • 7-14 February 2026
+            </p>
             <span style={{ 
               display: "inline-flex", 
               alignItems: "center",
               justifyContent: "center",
-              minHeight: "var(--control-height)", 
+              height: "40px", 
               padding: "0 var(--space-lg)",
-              backgroundColor: "var(--text-primary)", 
-              color: "var(--surface)", 
+              backgroundColor: "var(--surface)", 
+              color: "var(--primary)", 
               borderRadius: "var(--radius-button)", 
-              fontSize: "var(--font-button-size)", 
-              fontWeight: "var(--font-button-weight)", 
-              marginTop: "var(--space-xs)", 
-              width: "fit-content" 
+              fontSize: "14px", 
+              fontWeight: "600", 
+              marginTop: "var(--space-md)", 
+              width: "fit-content",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
             }}>
-              Get Promo
+              Claim Offer
             </span>
+          </div>
+          
+          <div style={{ 
+            fontSize: "120px", 
+            opacity: 0.1, 
+            position: "absolute", 
+            right: "-20px", 
+            bottom: "-40px",
+            pointerEvents: "none"
+          }}>
+            -
           </div>
         </button>
 
         {/* BEST SELLERS SECTION */}
         <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", paddingBottom: "var(--space-3xl)" }}>
-          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <h2 style={{ margin: 0, fontSize: "var(--font-h2-size)", fontWeight: "var(--font-h2-weight)", fontFamily: "var(--font-heading)" }}>Best Seller Categories</h2>
-            <button style={{ background: "none", border: "none", cursor: "pointer", fontWeight: "var(--font-button-weight)", fontSize: "var(--font-button-size)", color: "var(--primary)", display: "flex", alignItems: "center", gap: "4px", padding: 0 }} onClick={() => navigate("/best-sellers")}>
-              See All &rarr;
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "var(--space-sm)" }}>
+            <h2 style={{ margin: 0, fontSize: "var(--font-h2-size)", fontWeight: "var(--font-h2-weight)", fontFamily: "var(--font-heading)" }}>
+              Best Seller Categories
+            </h2>
+            
+            {/* Restored the route to your dedicated Best Sellers page */}
+            <button 
+              style={{ 
+                background: "none", 
+                border: "none", 
+                cursor: "pointer", 
+                fontWeight: "600", 
+                fontSize: "15px", 
+                color: "var(--primary)", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "4px", 
+                padding: 0 
+              }} 
+              onClick={() => navigate("/best-sellers")}
+            >
+              See All Best Sellers &rarr;
             </button>
           </header>
 
           {error ? (
-            <div style={{ backgroundColor: "var(--error-bg)", border: `1px solid var(--error)`, color: "var(--error)", padding: "var(--space-md)", borderRadius: "var(--radius-input)" }}>
-              <p>{error}</p>
-              <button className="secondary-button" onClick={() => window.location.reload()} style={{ minHeight: "var(--control-height)" }}>Retry</button>
+            <div className="alert alert-error">
+              <p style={{ margin: "0 0 var(--space-sm) 0" }}>{error}</p>
+              <button className="secondary-button" onClick={() => window.location.reload()}>Retry</button>
             </div>
           ) : (
             <div style={{ 
@@ -270,7 +364,6 @@ export default function HomePage() {
                   <CategoryCard 
                     key={category.id}
                     title={category.title}
-                    color={category.color}
                     imageUrl={category.imageUrl}
                     onClick={() => navigate(category.route)}
                   />

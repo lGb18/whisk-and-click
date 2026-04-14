@@ -19,9 +19,15 @@ function formatDateTime(value) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
+  
+  // Format to look like: "Feb 12, 2025, 3:30 PM"
+  return date.toLocaleString('en-US', { 
+    month: 'short', day: 'numeric', year: 'numeric', 
+    hour: 'numeric', minute: '2-digit' 
+  });
 }
 
+// UI Polish: Make the grid look like a clean receipt
 function KeyValueGrid({ data }) {
   const entries = Object.entries(data ?? {}).filter(
     ([, value]) =>
@@ -32,38 +38,29 @@ function KeyValueGrid({ data }) {
   );
 
   if (!entries.length) {
-    return <div style={{ color: "#666666" }}>No data available.</div>;
+    return <p style={{ color: "var(--text-secondary)", margin: 0 }}>No additional details provided.</p>;
   }
 
   return (
-    <div style={{ display: "grid", gap: "10px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       {entries.map(([key, value]) => (
         <div
           key={key}
           style={{
-            display: "grid",
-            gridTemplateColumns: "180px 1fr",
-            gap: "12px",
-            alignItems: "start",
-            paddingBottom: "10px",
-            borderBottom: "1px solid #F3F3F3",
+            display: "flex",
+            justifyContent: "space-between",
+            paddingBottom: "8px",
+            borderBottom: "1px solid var(--border)",
+            alignItems: "flex-start",
+            gap: "var(--space-md)"
           }}
         >
-          <div
-            style={{
-              fontWeight: 600,
-              color: "#444444",
-              textTransform: "capitalize",
-            }}
-          >
+          <span style={{ fontWeight: 600, color: "var(--text-primary)", textTransform: "capitalize", minWidth: "120px" }}>
             {key.replace(/_/g, " ")}
-          </div>
-
-          <div style={{ color: "#555555", whiteSpace: "pre-wrap" }}>
-            {typeof value === "object"
-              ? JSON.stringify(value, null, 2)
-              : String(value)}
-          </div>
+          </span>
+          <span style={{ color: "var(--text-secondary)", textAlign: "right", whiteSpace: "pre-wrap" }}>
+            {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+          </span>
         </div>
       ))}
     </div>
@@ -78,7 +75,6 @@ export default function OrderDetailsPage() {
 
   const canManageStatus = role === "staff" || role === "admin";
 
-  // 1. Order Query (Replaces order, isLoading, and errorMessage state)
   const { 
     data: order, 
     isLoading: isOrderLoading, 
@@ -90,14 +86,12 @@ export default function OrderDetailsPage() {
     enabled: !!orderId,
   });
 
-  // 2. Payment Query (Replaces payment and paymentProofUrl state)
   const {
     data: paymentData,
     isLoading: isPaymentLoading,
   } = useQuery({
     queryKey: ['payment', orderId],
     queryFn: async () => {
-      // Return null gracefully if fetch fails so the page doesn't crash on unpaid orders
       try {
         const payment = await fetchPaymentByOrderId(orderId);
         let proofUrl = "";
@@ -112,156 +106,119 @@ export default function OrderDetailsPage() {
     enabled: !!orderId,
   });
 
-  // Extract payment variables safely for the UI
   const payment = paymentData?.payment || null;
   const paymentProofUrl = paymentData?.proofUrl || "";
 
   const sourceLabel = useMemo(() => {
     if (!order?.reference_source) return "—";
-    if (order.reference_source === "recommendation") return "Recommendation";
-    if (order.reference_source === "fallback_ai") return "Fallback AI";
+    if (order.reference_source === "recommendation") return "Bakeshop";
+    if (order.reference_source === "fallback_ai") return "Custom";
     return order.reference_source;
   }, [order]);
 
-  // Handler to refresh payment data after a staff review
   const handlePaymentReviewed = () => {
     queryClient.invalidateQueries({ queryKey: ['payment', orderId] });
   };
 
   return (
     <AppShell
-      title="Order Details"
-      subtitle={order ? `Order ID: ${order.id}` : "Review order details and tracking."}
+      title="Order Summary"
+      subtitle={order ? `Order Ref: #${order.id.split('-')[0].toUpperCase()}` : "Review order details and tracking."}
     >
-      <button
-        onClick={() => navigate("/my-orders")}
-        style={{
-          width: "fit-content",
-          padding: "8px 12px",
-          borderRadius: "10px",
-          border: "1px solid #DDDDDD",
-          background: "#FFFFFF",
-          color: "#333333",
-          cursor: "pointer",
-          fontWeight: 600,
-        }}
-      >
-        Back to My Orders
-      </button>
+      {/* Top Action Bar */}
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <button className="secondary-button" onClick={() => navigate(-1)}>
+          &larr; Back to List
+        </button>
+      </div>
 
-      {/* TanStack Error Handling */}
-      {isOrderError ? <ErrorStateCard message={orderError?.message || "Failed to load order"} /> : null}
+      {isOrderError && <ErrorStateCard message={orderError?.message || "Failed to load order"} />}
 
-      {/* TanStack Loading Handling */}
       {isOrderLoading ? (
         <LoadingStateCard message="Loading order details..." />
       ) : !order ? (
         <ErrorStateCard message="Order not found." />
       ) : (
-        <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "16px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ color: "#666666" }}>
-              Current status: {getStatusLabel(order.status)}
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
+          
+          {/* Header Banner */}
+          <div className="card" style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            gap: "var(--space-md)", 
+            alignItems: "center", 
+            flexWrap: "wrap",
+            padding: "var(--space-lg)" 
+          }}>
+            <div>
+              <p className="caption" style={{ margin: "0 0 4px 0" }}>Current Status</p>
+              <h2 style={{ fontSize: "var(--font-h2-size)", margin: 0 }}>{getStatusLabel(order.status)}</h2>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
 
-          <SectionCard title="Order Overview">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "12px",
-              }}
-            >
-              <div style={{ padding: "14px", borderRadius: "12px", background: "#FAFAFA" }}>
-                <div style={{ color: "#666666", marginBottom: "6px" }}>Source</div>
-                <div style={{ fontWeight: 600, color: "#333333" }}>{sourceLabel}</div>
-              </div>
-
-              <div style={{ padding: "14px", borderRadius: "12px", background: "#FAFAFA" }}>
-                <div style={{ color: "#666666", marginBottom: "6px" }}>Created At</div>
-                <div style={{ fontWeight: 600, color: "#333333" }}>
-                  {formatDateTime(order.created_at)}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "var(--space-xl)", alignItems: "start" }}>
+            
+            {/* LEFT COLUMN: Data grids */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
+              <SectionCard title="Order Details">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)", marginBottom: "var(--space-lg)" }}>
+                  <div style={{ padding: "var(--space-sm)", borderRadius: "var(--radius-card)", backgroundColor: "var(--surface-muted)" }}>
+                    <p className="caption" style={{ margin: "0 0 2px 0" }}>Source</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{sourceLabel}</p>
+                  </div>
+                  <div style={{ padding: "var(--space-sm)", borderRadius: "var(--radius-card)", backgroundColor: "var(--surface-muted)" }}>
+                    <p className="caption" style={{ margin: "0 0 2px 0" }}>Date Placed</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{formatDateTime(order.created_at)}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div style={{ padding: "14px", borderRadius: "12px", background: "#FAFAFA" }}>
-                <div style={{ color: "#666666", marginBottom: "6px" }}>Status Updated</div>
-                <div style={{ fontWeight: 600, color: "#333333" }}>
-                  {formatDateTime(order.status_updated_at)}
-                </div>
-              </div>
+                {order.cancel_reason && (
+                  <div className="alert alert-error" style={{ marginBottom: "var(--space-md)" }}>
+                    <strong>Cancel Reason:</strong> {order.cancel_reason}
+                  </div>
+                )}
+                
+                <h4 style={{ margin: "0 0 var(--space-sm) 0", fontSize: "16px" }}>Checkout Information</h4>
+                <KeyValueGrid data={order.checkout_details} />
+              </SectionCard>
+
+              <SectionCard title="Cake Configuration">
+                <KeyValueGrid data={{ ...order.cake_config, ...order.customization }} />
+              </SectionCard>
             </div>
 
-            {order.cancel_reason ? (
-              <ErrorStateCard message={`Cancel Reason: ${order.cancel_reason}`} />
-            ) : null}
-          </SectionCard>
+            {/* RIGHT COLUMN: Operational info & timeline */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
+              {canManageStatus && (
+                <StatusUpdatePanel orderId={order.id} currentStatus={order.status} />
+              )}
 
-          {/* Payment Section */}
-          <SectionCard title="Payment Information">
-            {isPaymentLoading ? (
-              <div style={{ color: "#666666" }}>Loading payment details...</div>
-            ) : (
-              <PaymentSummaryCard payment={payment} proofUrl={paymentProofUrl} />
-            )}
-          </SectionCard>
+              <SectionCard title="Payment Information">
+                {isPaymentLoading ? (
+                  <p style={{ color: "var(--text-secondary)" }}>Loading payment details...</p>
+                ) : (
+                  <PaymentSummaryCard payment={payment} proofUrl={paymentProofUrl} />
+                )}
+              </SectionCard>
 
-          {canManageStatus && payment ? (
-            <SectionCard title="Payment Review">
-              <PaymentReviewPanel
-                payment={payment}
-                onReviewed={handlePaymentReviewed}
-              />
-            </SectionCard>
-          ) : null}
+              {canManageStatus && payment && (
+                <SectionCard title="Payment Review">
+                  <PaymentReviewPanel payment={payment} onReviewed={handlePaymentReviewed} />
+                </SectionCard>
+              )}
 
-          {canManageStatus ? (
-            <StatusUpdatePanel
-              orderId={order.id}
-              currentStatus={order.status}
-            />
-          ) : null}
+              <SectionCard title="Status Timeline">
+                <OrderTimeline history={order.order_status_history ?? []} />
+              </SectionCard>
 
-          <SectionCard title="Reference Preview">
-            <OrderReferencePreview order={order} />
-          </SectionCard>
+              <SectionCard title="Visual Reference">
+                <OrderReferencePreview order={order} />
+              </SectionCard>
+            </div>
 
-          <SectionCard title="Status Timeline">
-            <OrderTimeline history={order.order_status_history ?? []} />
-          </SectionCard>
-
-          <SectionCard title="Reference Information">
-            <KeyValueGrid
-              data={{
-                reference_source: order.reference_source,
-                cake_reference_id: order.cake_reference_id,
-                fallback_prompt: order.fallback_prompt,
-              }}
-            />
-          </SectionCard>
-
-          <SectionCard title="Cake Configuration">
-            <KeyValueGrid data={order.cake_config} />
-          </SectionCard>
-
-          <SectionCard title="Customization">
-            <KeyValueGrid data={order.customization} />
-          </SectionCard>
-
-          <SectionCard title="Checkout Details">
-            <KeyValueGrid data={order.checkout_details} />
-          </SectionCard>
-        </>
+          </div>
+        </div>
       )}
     </AppShell>
   );

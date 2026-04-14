@@ -9,14 +9,15 @@ export default function OrderReferencePreview({ order }) {
         style={{
           width: "100%",
           minHeight: "180px",
-          display: "grid",
-          placeItems: "center",
-          borderRadius: "14px",
-          border: "1px dashed #D8D8D8",
-          background: "#FAFAFA",
-          color: "#777777",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "var(--radius-card)",
+          border: "2px dashed var(--border)",
+          backgroundColor: "var(--surface-muted)",
+          color: "var(--text-secondary)",
           textAlign: "center",
-          padding: "16px",
+          padding: "var(--space-md)",
         }}
       >
         {preview.fallbackLabel}
@@ -31,9 +32,15 @@ export default function OrderReferencePreview({ order }) {
       style={{
         width: "100%",
         maxWidth: "420px",
-        borderRadius: "14px",
-        border: "1px solid #EEEEEE",
+        borderRadius: "var(--radius-card)",
+        border: "1px solid var(--border)",
         objectFit: "cover",
+        boxShadow: "var(--shadow-card-soft)",
+      }}
+      onError={(e) => {
+        // Ultimate fallback if the image path is broken
+        e.target.src = "/assets/placeholder.png"; 
+        e.target.style.objectFit = "contain";
       }}
     />
   );

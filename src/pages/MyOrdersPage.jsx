@@ -14,12 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 export default function MyOrdersPage() {
   const navigate = useNavigate();
   const { user } = useAuthSession();
-  // const { reloadProfile } = useAuthSession();
-
-  // const [orders, setOrders] = useState([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [errorMessage, setErrorMessage] = useState("");
-
 
   const { 
     data: orders = [], 
@@ -27,9 +21,9 @@ export default function MyOrdersPage() {
     isError, 
     error 
   } = useQuery({
-    queryKey: ['my-orders', user?.id], // Cache key
-    queryFn: fetchMyOrders,            // Your existing fetcher from utils
-    enabled: !!user?.id,               // Only run if we have a user
+    queryKey: ['my-orders', user?.id],
+    queryFn: fetchMyOrders,            
+    enabled: !!user?.id,               
     staleTime: 60000,
   });
 
@@ -37,13 +31,13 @@ export default function MyOrdersPage() {
     <AppShell title="My Orders" subtitle="Review your placed orders and tracking details.">
       {isError ? <ErrorStateCard message={error?.message || "Failed to load orders."} /> : null}
 
-      {/* isLoading is ONLY true on the very first fetch. No flicker on return! */}
       {isLoading ? (
         <LoadingStateCard message="Loading your orders..." />
       ) : orders.length === 0 ? (
-        <EmptyStateCard message="You have no orders yet." />
+        <EmptyStateCard message="You have no active or past orders yet." />
       ) : (
-        <div style={{ display: "grid", gap: "12px" }}>
+        // Swapped to CSS variables for responsive consistency
+        <div style={{ display: "grid", gap: "var(--space-md)" }}>
           {orders.map((order) => (
             <OrderSummaryCard
               key={order.id}

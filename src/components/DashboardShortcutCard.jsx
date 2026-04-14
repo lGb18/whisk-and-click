@@ -1,42 +1,59 @@
-export default function DashboardShortcutCard({
-  title,
-  description,
-  onClick,
-  disabled = false,
-}) {
+// components/DashboardShortcutCard.jsx
+export default function DashboardShortcutCard({ title, description, onClick, primary }) {
   return (
     <button
+      className="card"
       onClick={onClick}
-      disabled={disabled}
       style={{
-        display: "grid",
-        gap: "8px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
         textAlign: "left",
-        padding: "18px",
-        borderRadius: "16px",
-        border: "1px solid #ECECEC",
-        background: "#FFFFFF",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.7 : 1,
+        padding: "var(--space-xl)",
+        border: primary ? "2px solid var(--primary)" : "1px solid transparent",
+        cursor: "pointer",
+        background: "var(--surface)",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        height: "100%",
+      }}
+      // Adds the hover lift effect cleanly via inline events, 
+      // though CSS classes are better if you have them!
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.boxShadow = "var(--shadow-card)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "var(--shadow-card-soft)";
       }}
     >
-      <div
-        style={{
-          fontSize: "1rem",
-          fontWeight: 700,
-          color: "#333333",
-        }}
-      >
+      <h3 style={{ 
+        fontSize: "var(--font-h3-size)", 
+        margin: "0 0 var(--space-xs) 0",
+        color: primary ? "var(--primary)" : "var(--text-primary)"
+      }}>
         {title}
-      </div>
-
-      <div
-        style={{
-          color: "#666666",
-          lineHeight: 1.5,
-        }}
-      >
+      </h3>
+      <p style={{ 
+        margin: 0, 
+        color: "var(--text-secondary)", 
+        fontSize: "var(--font-body-size)",
+        lineHeight: "var(--font-body-line)"
+      }}>
         {description}
+      </p>
+      
+      <div style={{ 
+        marginTop: "auto", 
+        paddingTop: "var(--space-lg)", 
+        color: "var(--primary)",
+        fontWeight: "600",
+        fontSize: "14px",
+        display: "flex",
+        alignItems: "center",
+        gap: "4px"
+      }}>
+        Get Started <span aria-hidden="true">&rarr;</span>
       </div>
     </button>
   );

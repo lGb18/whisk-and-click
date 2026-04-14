@@ -64,40 +64,16 @@ export default function StatusUpdatePanel({ orderId, currentStatus, onUpdated })
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: 'grid',
-        gap: '12px',
-        padding: '16px',
-        border: '1px solid #E8E8E8',
-        borderRadius: '14px',
-        background: '#FFFFFF',
-      }}
-    >
-      <div
-        style={{
-          fontWeight: 600,
-          color: '#333333',
-        }}
-      >
-        Update Order Status
-      </div>
+    <form className="card" onSubmit={handleSubmit} style={{ padding: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+      <h3 style={{ fontSize: "var(--font-h3-size)", margin: 0 }}>Update Order Status</h3>
 
-      <div style={{ display: 'grid', gap: '6px' }}>
-        <label style={{ fontWeight: 500, color: '#444444' }}>
-          Next Status
-        </label>
+      <div className="form-field">
+        <span>Next Status</span>
         <select
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
-          disabled={isSubmitting}
-          style={{
-            padding: '10px 12px',
-            borderRadius: '10px',
-            border: '1px solid #D8D8D8',
-            background: '#FFFFFF',
-          }}
+          disabled={mutation.isPending}
+          style={{ backgroundColor: "var(--surface-muted)", border: "none" }}
         >
           {nextStatuses.map((status) => (
             <option key={status} value={status}>
@@ -107,55 +83,29 @@ export default function StatusUpdatePanel({ orderId, currentStatus, onUpdated })
         </select>
       </div>
 
-      <div style={{ display: 'grid', gap: '6px' }}>
-        <label style={{ fontWeight: 500, color: '#444444' }}>
-          Note
-        </label>
+      <div className="form-field">
+        <span>Internal Note (Optional)</span>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Optional note for this status change"
-          rows={4}
-          disabled={isSubmitting}
-          style={{
-            padding: '10px 12px',
-            borderRadius: '10px',
-            border: '1px solid #D8D8D8',
-            background: '#FFFFFF',
-            resize: 'vertical',
-          }}
+          placeholder="e.g., Cake is in the oven, waiting for courier..."
+          rows={3}
+          disabled={mutation.isPending}
+          style={{ backgroundColor: "var(--surface-muted)", border: "none", resize: "vertical" }}
         />
       </div>
 
-      {errorMessage ? (
-        <div
-          style={{
-            padding: '10px 12px',
-            borderRadius: '10px',
-            background: '#FDEDED',
-            color: '#B3261E',
-            border: '1px solid #F5C2C0',
-          }}
-        >
-          {errorMessage}
-        </div>
-      ) : null}
+      {errorMessage && (
+        <div className="alert alert-error">{errorMessage}</div>
+      )}
 
       <button
         type="submit"
+        className="primary-button"
         disabled={mutation.isPending}
-        style={{
-          padding: '12px 16px',
-          borderRadius: '10px',
-          border: 'none',
-          background: '#E25D4D',
-          color: '#FFFFFF',
-          fontWeight: 600,
-          cursor: mutation.isPending ? 'not-allowed' : 'pointer',
-          opacity: mutation.isPending ? 0.7 : 1,
-        }}
+        style={{ marginTop: "var(--space-sm)" }}
       >
-        {mutation.isPending ? 'Updating...' : 'Update Status'}
+        {mutation.isPending ? 'Updating...' : 'Confirm Status Update'}
       </button>
     </form>
   );

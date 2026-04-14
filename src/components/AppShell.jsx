@@ -5,32 +5,49 @@ export default function AppShell({ title, subtitle, children }) {
     <div
       style={{
         minHeight: "100vh",
-        background: "#F9F7F4",
-        padding: "24px",
+        background: "var(--bg)", // Using theme variable
+        padding: "var(--space-xl) var(--space-lg)",
       }}
     >
       <div
         style={{
-          maxWidth: "1200px",
+          maxWidth: "var(--content-max-width)",
           margin: "0 auto",
-          display: "grid",
-          gap: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-2xl)",
         }}
       >
         <AppNav />
 
         {(title || subtitle) && (
-          <div style={{ display: "grid", gap: "6px" }}>
-            {title ? (
-              <h1 style={{ margin: 0, color: "#333333" }}>{title}</h1>
-            ) : null}
-            {subtitle ? (
-              <div style={{ color: "#666666" }}>{subtitle}</div>
-            ) : null}
-          </div>
+          <header style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            {title && (
+              <h1 style={{ 
+                margin: 0, 
+                color: "var(--text-primary)", 
+                fontFamily: "var(--font-heading)",
+                fontSize: "var(--font-h1-size)",
+                fontWeight: "var(--font-h1-weight)"
+              }}>
+                {title}
+              </h1>
+            )}
+            {subtitle && (
+              <p style={{ 
+                margin: 0,
+                color: "var(--text-secondary)", 
+                fontSize: "var(--font-body-size)" 
+              }}>
+                {subtitle}
+              </p>
+            )}
+          </header>
         )}
 
-        {children}
+        <main>
+          {children}
+        </main>
       </div>
     </div>
   );

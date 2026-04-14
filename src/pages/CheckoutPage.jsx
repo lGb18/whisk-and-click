@@ -1,14 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import PrimaryButton from "../components/PrimaryButton";
+import SecondaryButton from "../components/SecondaryButton";
 import { useAppFlow } from "../state/AppFlow";
 import { createOrder } from "../utils/createOrder"
 import { supabase } from "../lib/supabaseClient";
 import { createPaymentForOrder, uploadPaymentProof } from "../utils/paymentQueries";
 
+function buildAddressSummary({ addressLine1, addressLine2, city, region, postalCode }) {
+  const parts = [addressLine1, addressLine2, city, region, postalCode]
+    .filter(Boolean)
+    .join(", ");
+  return parts || "Delivery address pending";
+}
+
+function formatPaymentMethodLabel(method) {
+  switch (method) {
+    case "cod": return "Cash on Delivery/Pickup";
+    case "gcash": return "GCash";
+    case "bank_transfer": return "Bank Transfer";
+    case "manual_other": return "Other Manual";
+    default: return "Credit / Debit Card";
+  }
+}
+
 export default function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
   const {
     cakeConfig,
     selectedCake,
@@ -22,17 +43,31 @@ export default function CheckoutPage() {
   } = useAppFlow();
 
   const [paymentDraft, setPaymentDraft] = useState({
-    paymentMethod: "cod",
+    paymentMethod: "cod", // Harmonized to match button values
     referenceNumber: "",
     proofFile: null,
     notes: "",
   });
   
+  // 1. DATA & AUTH GUARD (HCI: Don't let them fill the form if they aren't logged in)
   useEffect(() => {
-    if ((!selectedCake && !selectedFallback) || !cakeConfig) {
-      navigate("/");
-    }
-  }, [selectedCake, cakeConfig, selectedFallback, navigate]);
+    const verifyAccess = async () => {
+      // Check data
+      if ((!selectedCake && !selectedFallback) || !cakeConfig) {
+        navigate("/");
+        return;
+      }
+      
+      // Check auth upfront
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate(`/auth?redirectTo=${encodeURIComponent(location.pathname)}`);
+      } else {
+        setIsAuthChecking(false);
+      }
+    };
+    verifyAccess();
+  }, [selectedCake, cakeConfig, selectedFallback, navigate, location.pathname]);
 
   const [formState, setFormState] = useState(() => ({
     fullName: checkoutDraft?.fullName || "",
@@ -43,32 +78,21 @@ export default function CheckoutPage() {
     city: checkoutDraft?.city || "",
     region: checkoutDraft?.region || "",
     postalCode: checkoutDraft?.postalCode || "",
-    paymentMethod: checkoutDraft?.paymentMethod || "cash_on_delivery",
+    paymentMethod: checkoutDraft?.paymentMethod || "cod", // Harmonized
     paymentReference: checkoutDraft?.paymentReference || "",
   }));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // Sync state with Context
   useEffect(() => {
     if (!checkoutDraft) return;
-    setFormState((prev) => ({
-      fullName: checkoutDraft.fullName ?? prev.fullName,
-      contactNumber: checkoutDraft.contactNumber ?? prev.contactNumber,
-      fulfillmentType: checkoutDraft.fulfillmentType ?? prev.fulfillmentType,
-      addressLine1: checkoutDraft.addressLine1 ?? prev.addressLine1,
-      addressLine2: checkoutDraft.addressLine2 ?? prev.addressLine2,
-      city: checkoutDraft.city ?? prev.city,
-      region: checkoutDraft.region ?? prev.region,
-      postalCode: checkoutDraft.postalCode ?? prev.postalCode,
-      paymentMethod: checkoutDraft.paymentMethod ?? prev.paymentMethod,
-      paymentReference: checkoutDraft.paymentReference ?? prev.paymentReference,
-    }));
+    setFormState((prev) => ({ ...prev, ...checkoutDraft }));
   }, [checkoutDraft]);
 
   useEffect(() => {
     if (!checkoutDraft) return;
-    
     const isDifferent = JSON.stringify(checkoutDraft) !== JSON.stringify(formState);
     if (isDifferent && typeof setCheckoutDraft === "function") {
       setCheckoutDraft(formState);
@@ -86,7 +110,6 @@ export default function CheckoutPage() {
 
   const isSubmitDisabled = useMemo(() => {
     setSubmitError("Please complete all required fields.");
-
     if (!formState.fullName.trim() || !formState.contactNumber.trim()) return true;
     if (requiresAddress) {
       return (
@@ -107,14 +130,9 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        throw new Error("You must sign in before placing an order.");
-      }
+      if (userError || !user) throw new Error("Your session expired. Please sign in again.");
 
       const orderPayload = createOrder({
         userId: user.id,
@@ -125,23 +143,13 @@ export default function CheckoutPage() {
         checkoutDraft: formState,
       });
 
-      const { data, error } = await supabase
-        .from("orders")
-        .insert(orderPayload)
-        .select()
-        .single();
+      const { data, error } = await supabase.from("orders").insert(orderPayload).select().single();
+      if (error) throw new Error(error.message);
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // 2. Store the created order (we need its ID for payment)
       const createdOrder = data;
       setCreatedOrder(createdOrder);
 
-      // 3. Upload proof file if provided (only for non-COD methods)
       let proofPath = "";
-
       if (paymentDraft.proofFile && user?.id && createdOrder?.id) {
         proofPath = await uploadPaymentProof({
           userId: user.id,
@@ -150,34 +158,39 @@ export default function CheckoutPage() {
         });
       }
 
-      // 4. Create the payment record linked to the order
       await createPaymentForOrder({
         orderId: createdOrder.id,
         userId: user.id,
         paymentMethod: paymentDraft.paymentMethod,
-        amount: null, // keep null unless you compute a final total
+        amount: null, 
         referenceNumber: paymentDraft.referenceNumber,
         proofPath,
         notes: paymentDraft.notes,
       });
+      
       resetFlow();
-      // 5. Navigate only after both order + payment succeed
       navigate("/my-orders");
     } catch (error) {
       console.error(error);
-      setSubmitError(
-        error.message || "We couldn't finish the checkout just now. Please try again."
-      );
+      setSubmitError(error.message || "We couldn't finish the checkout just now. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  if (isAuthChecking) return <div className="page-shell"><p style={{textAlign:"center"}}>Securing checkout...</p></div>;
+
+  // Derive Display Image for Sidebar
+  const isCatalog = !!selectedCake;
+  const displayImage = isCatalog ? selectedCake.image : selectedFallback?.imageUrl;
+  const displayTitle = isCatalog ? (selectedCake.title || "Custom Cake") : "Custom AI Concept";
 
   return (
     <div className="page-shell checkout-shell">
       <div className="container-wide">
         <div className="checkout-layout">
 
+          {/* LEFT: THE FORM */}
           <form className="card checkout-form" onSubmit={handleSubmit}>
             <PageHeader
               title="Checkout"
@@ -202,7 +215,7 @@ export default function CheckoutPage() {
                   type="tel"
                   value={formState.contactNumber}
                   onChange={handleChange("contactNumber")}
-                  placeholder="6969696969"
+                  placeholder="0917 123 4567"
                   required
                 />
               </label>
@@ -228,14 +241,13 @@ export default function CheckoutPage() {
               </div>
 
               {requiresAddress && (
-                <div className="address-grid">
+                <div className="address-grid" style={{ marginTop: "var(--space-md)" }}>
                   <label className="form-field address-full">
                     <span>Street address</span>
                     <input
                       type="text"
                       value={formState.addressLine1}
                       onChange={handleChange("addressLine1")}
-                      placeholder=""
                       required={requiresAddress}
                     />
                   </label>
@@ -245,7 +257,6 @@ export default function CheckoutPage() {
                       type="text"
                       value={formState.addressLine2}
                       onChange={handleChange("addressLine2")}
-                      placeholder=""
                     />
                   </label>
                   <label className="form-field">
@@ -282,7 +293,7 @@ export default function CheckoutPage() {
             <fieldset className="form-section">
               <legend className="form-heading">Payment</legend>
 
-              <div className="button-toggle-group">
+              <div className="button-toggle-group" style={{ flexWrap: "wrap" }}>
                 {[
                   { value: "cod", label: "Cash on Delivery/Pickup" },
                   { value: "gcash", label: "GCash" },
@@ -305,153 +316,137 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {paymentDraft.paymentMethod !== "cod" ? (
-                <>
+              {paymentDraft.paymentMethod !== "cod" && (
+                <div style={{ marginTop: "var(--space-md)", padding: "var(--space-md)", backgroundColor: "var(--surface-muted)", borderRadius: "var(--radius-input)" }}>
                   <label className="form-field">
                     <span>Reference Number</span>
                     <input
                       type="text"
                       value={paymentDraft.referenceNumber}
-                      onChange={(e) =>
-                        setPaymentDraft((prev) => ({
-                          ...prev,
-                          referenceNumber: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setPaymentDraft((prev) => ({ ...prev, referenceNumber: e.target.value }))}
                       placeholder="Enter payment reference number"
+                      style={{ backgroundColor: "var(--surface)" }}
                     />
                   </label>
 
-                  <label className="form-field">
-                    <span>Payment Proof</span>
+                  <label className="form-field" style={{ marginTop: "var(--space-md)" }}>
+                    <span>Payment Proof (Screenshot)</span>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) =>
-                        setPaymentDraft((prev) => ({
-                          ...prev,
-                          proofFile: e.target.files?.[0] ?? null,
-                        }))
-                      }
+                      onChange={(e) => setPaymentDraft((prev) => ({ ...prev, proofFile: e.target.files?.[0] ?? null }))}
+                      style={{ border: "none", padding: "8px 0" }}
                     />
                   </label>
-                </>
-              ) : null}
+                </div>
+              )}
 
-              <label className="form-field">
+              <label className="form-field" style={{ marginTop: "var(--space-md)" }}>
                 <span>Payment Notes</span>
                 <input
                   type="text"
                   value={paymentDraft.notes}
-                  onChange={(e) =>
-                    setPaymentDraft((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setPaymentDraft((prev) => ({ ...prev, notes: e.target.value }))}
                   placeholder="Optional payment note"
                 />
               </label>
             </fieldset>
 
-            {submitError && <div className="alert alert-error">{submitError}</div>}
+            {submitError && <div className="alert alert-error" style={{ marginBottom: "var(--space-md)" }}>{submitError}</div>}
 
             <div className="checkout-actions">
-              <PrimaryButton type="submit" disabled={isSubmitDisabled || isSubmitting}>
-                {isSubmitting ? "Creating order..." : "Place Order"}
+              <PrimaryButton type="submit" disabled={isSubmitDisabled || isSubmitting} style={{ flex: 1 }}>
+                {isSubmitting ? "Processing Order..." : "Place Order"}
               </PrimaryButton>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => navigate("/recommendations")}
-              >
-                Back to Designer
-              </button>
+              <SecondaryButton type="button" onClick={() => navigate("/confirmation")} style={{ flex: 1 }}>
+                Edit Customization
+              </SecondaryButton>
             </div>
           </form>
 
-          <aside className="checkout-summary">
-            <div className="summary-card">
-              <div className="summary-preview" aria-hidden="true" />
+          {/* RIGHT: THE RECEIPT (HCI anchored summary) */}
+          <aside className="checkout-summary" style={{ position: "sticky", top: "24px" }}>
+            <div className="summary-card card">
+              
+              {/* Fixed the Ghost Image Bug */}
+              <div 
+                className="summary-preview" 
+                style={{ 
+                  backgroundImage: `url(${displayImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  borderRadius: "12px",
+                  height: "180px",
+                  marginBottom: "var(--space-md)"
+                }} 
+              />
+              
               <div className="summary-details">
-                <h3 className="summary-title">Your Cake</h3>
-                <p className="summary-item">
-                  {/* <strong>{selectedCake?.title ?? "Custom Cake"}</strong> */}
-                  <strong>{"Custom Cake"}</strong>
+                <h3 className="summary-title" style={{ fontSize: "var(--font-h3-size)" }}>Order Summary</h3>
+                <p className="summary-item" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "8px", marginBottom: "8px" }}>
+                  <strong>{displayTitle}</strong>
                 </p>
-                {cakeConfig &&
-                  Object.entries(cakeConfig).map(([key, value]) => (
-                    <p className="summary-item" key={key}>
-                      <span>{key}</span>
-                      <span>{value}</span>
-                    </p>
-                  ))}
+                
+                {/* Cleaned up raw object mapping to specific properties */}
+                {cakeConfig?.flavor && cakeConfig.flavor !== "unknown" && (
+                  <p className="summary-item"><span>Flavor</span> <span style={{ textTransform: "capitalize" }}>{cakeConfig.flavor}</span></p>
+                )}
+                {customizationDraft?.sizeAdjustment && (
+                  <p className="summary-item"><span>Size</span> <span style={{ textTransform: "capitalize" }}>{customizationDraft.sizeAdjustment}</span></p>
+                )}
+                {customizationDraft?.colorTheme && (
+                  <p className="summary-item"><span>Theme</span> <span style={{ textTransform: "capitalize" }}>{customizationDraft.colorTheme}</span></p>
+                )}
               </div>
             </div>
 
-            <div className="summary-card">
-              <h3 className="summary-title">Customization Notes</h3>
-              <p className="summary-copy">
-                {customizationDraft?.specialInstructions
-                  ? customizationDraft.specialInstructions
-                  : "No additional notes at the moment."}
-              </p>
-              <hr className="summary-divider" />
-              <div className="summary-meta">
-                <p className="summary-item">
-                  <span>Flavor</span>
-                  <span>{customizationDraft?.cakeMessage || "TBD"}</span>
+            <div className="summary-card card">
+              <h3 className="summary-title" style={{ fontSize: "16px" }}>Personalization</h3>
+              
+              {/* Fixed the Flavor/Message Bug */}
+              {customizationDraft?.cakeMessage && (
+                <div style={{ marginBottom: "var(--space-sm)" }}>
+                  <span style={{ fontSize: "13px", color: "var(--text-secondary)", fontWeight: "600" }}>Cake Message:</span>
+                  <p className="summary-copy" style={{ marginTop: "2px", fontStyle: "italic" }}>"{customizationDraft.cakeMessage}"</p>
+                </div>
+              )}
+              
+              <div>
+                <span style={{ fontSize: "13px", color: "var(--text-secondary)", fontWeight: "600" }}>Special Instructions:</span>
+                <p className="summary-copy" style={{ marginTop: "2px" }}>
+                  {customizationDraft?.specialInstructions || "None provided."}
                 </p>
-                {/* <p className="summary-item">
-                  <span>Serving size</span>
-                  <span>{customizationDraft?.specialInstructions || cakeConfig?.specialInstructions || "TBD"}</span>
-                </p> */}
               </div>
             </div>
 
-            <div className="summary-card">
-              <h3 className="summary-title">Checkout Snapshot</h3>
+            <div className="summary-card card">
+              <h3 className="summary-title" style={{ fontSize: "16px" }}>Checkout Details</h3>
               <p className="summary-item">
-                <span>Fulfillment</span>
-                <span>{formState.fulfillmentType === "delivery" ? "Delivery" : "Pickup"}</span>
+                <span>Method</span>
+                <span style={{ fontWeight: "600" }}>{formState.fulfillmentType === "delivery" ? "Delivery" : "Store Pickup"}</span>
               </p>
               <p className="summary-item">
                 <span>Payment</span>
-                <span>{formatPaymentMethodLabel(formState.paymentMethod)}</span>
+                <span>{formatPaymentMethodLabel(paymentDraft.paymentMethod)}</span>
               </p>
+              
+              <hr className="summary-divider" style={{ margin: "12px 0" }} />
+              
               <p className="summary-item">
                 <span>Contact</span>
                 <span>{formState.contactNumber || "—"}</span>
               </p>
-              <p className="summary-item">
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px", color: "var(--text-secondary)", paddingTop: "4px" }}>
                 <span>Address</span>
-                <span>
-                  {formState.fulfillmentType === "delivery"
-                    ? buildAddressSummary(formState)
-                    : "Pick up in store"}
+                <span style={{ textAlign: "right", maxWidth: "60%" }}>
+                  {formState.fulfillmentType === "delivery" ? buildAddressSummary(formState) : "Pick up in store"}
                 </span>
-              </p>
+              </div>
             </div>
           </aside>
+
         </div>
       </div>
     </div>
   );
-}
-
-
-function buildAddressSummary({ addressLine1, addressLine2, city, region, postalCode }) {
-  const parts = [addressLine1, addressLine2, city, region, postalCode]
-    .filter(Boolean)
-    .join(", ");
-  return parts || "Delivery address pending";
-}
-
-function formatPaymentMethodLabel(method) {
-  switch (method) {
-    case "cash_on_delivery": return "Cash on Delivery";
-    case "bank_transfer": return "Bank Transfer";
-    case "digital_wallet": return "Digital Wallet";
-    default: return "Credit / Debit Card";
-  }
 }
