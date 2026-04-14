@@ -68,10 +68,10 @@ export async function fetchPaymentByOrderId(orderId) {
       )
     `)
     .eq("order_id", orderId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
-
+  if (!data) return null;
   return {
     ...data,
     payment_status_history: [...(data?.payment_status_history ?? [])].sort(

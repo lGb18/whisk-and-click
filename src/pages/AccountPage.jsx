@@ -18,6 +18,7 @@ export default function AccountPage() {
   } = useAuthSession();
 
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,6 +26,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     setFullName(profile?.full_name || "");
+    setPhoneNumber(profile?.phone_number || "");
   }, [profile]);
 
 
@@ -40,6 +42,7 @@ export default function AccountPage() {
       await updateOwnProfile({
         userId: user.id,
         fullName: fullName.trim() || null,
+        phoneNumber: phoneNumber.trim() || null,
       });
 
       await reloadProfile();
@@ -115,6 +118,11 @@ export default function AccountPage() {
                 background: "#FFFFFF",
               }}
             />
+          </div>
+
+          <div style={{ display: "grid", gap: "6px" }}>
+            <label style={{ fontWeight: 600, color: "#444444" }}>Phone Number</label>
+            <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+63 900 000 0000" style={{ padding: "12px 14px", borderRadius: "10px", border: "1px solid #D8D8D8", background: "#FFFFFF" }} />
           </div>
 
           <div style={{ display: "grid", gap: "6px" }}>

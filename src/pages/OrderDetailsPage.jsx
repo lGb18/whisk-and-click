@@ -1,25 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "../components/AppShell";
 import OrderReferencePreview from "../components/OrderReferencePreview";
 import OrderStatusBadge from "../components/OrderStatusBadge";
 import OrderTimeline from "../components/OrderTimeline";
 import SectionCard from "../components/SectionCard";
 import StatusUpdatePanel from "../components/StatusUpdatePanel";
-import { ErrorStateCard, LoadingStateCard } from "../components/PageState";
-import { fetchOrderById } from "../utils/orderQueries";
-import { getStatusLabel } from "../utils/orderStatusConfig";
-import { useAuthSession } from "../hooks/useAuthSession";
 import PaymentSummaryCard from "../components/PaymentSummaryCard";
 import PaymentReviewPanel from "../components/PaymentReviewPanel";
+import { ErrorStateCard, LoadingStateCard } from "../components/PageState";
+import { fetchOrderById } from "../utils/orderQueries";
 import { fetchPaymentByOrderId, getPaymentProofSignedUrl } from "../utils/paymentQueries";
+import { getStatusLabel } from "../utils/orderStatusConfig";
+import { useAuthSession } from "../hooks/useAuthSession";
 
 function formatDateTime(value) {
   if (!value) return "—";
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-
   return date.toLocaleString();
 }
 
@@ -74,69 +73,60 @@ function KeyValueGrid({ data }) {
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  // Ensure useAuthSession is properly imported in your actual file
-  const { role, reloadProfile } = useAuthSession();
-
-  const [order, setOrder] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  // 1. ADDED PAYMENT STATE HERE (inside the component)
-  const [payment, setPayment] = useState(null);
-  const [paymentProofUrl, setPaymentProofUrl] = useState("");
+  const queryClient = useQueryClient();
+  const { role } = useAuthSession();
 
   const canManageStatus = role === "staff" || role === "admin";
 
-  const loadOrder = useCallback(async () => {
-    if (!orderId) return;
+  // 1. Order Query (Replaces order, isLoading, and errorMessage state)
+  const { 
+    data: order, 
+    isLoading: isOrderLoading, 
+    isError: isOrderError, 
+    error: orderError 
+  } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: () => fetchOrderById(orderId),
+    enabled: !!orderId,
+  });
 
-    setIsLoading(true);
-    setErrorMessage("");
-
-    try {
-      // Ensure fetchOrderById is imported at the top of your file
-      const data = await fetchOrderById(orderId);
-      setOrder(data);
-    } catch (error) {
-      setErrorMessage(error?.message ?? "Failed to load order details.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orderId]);
-
-  // 2. MOVED loadPayment INSIDE THE COMPONENT (so it can access states & orderId)
-  const loadPayment = useCallback(async () => {
-    if (!orderId) return;
-
-    try {
-      const paymentData = await fetchPaymentByOrderId(orderId);
-      setPayment(paymentData);
-
-      if (paymentData?.proof_path) {
-        const signedUrl = await getPaymentProofSignedUrl(paymentData.proof_path, 3600);
-        setPaymentProofUrl(signedUrl);
-      } else {
-        setPaymentProofUrl("");
+  // 2. Payment Query (Replaces payment and paymentProofUrl state)
+  const {
+    data: paymentData,
+    isLoading: isPaymentLoading,
+  } = useQuery({
+    queryKey: ['payment', orderId],
+    queryFn: async () => {
+      // Return null gracefully if fetch fails so the page doesn't crash on unpaid orders
+      try {
+        const payment = await fetchPaymentByOrderId(orderId);
+        let proofUrl = "";
+        if (payment?.proof_path) {
+          proofUrl = await getPaymentProofSignedUrl(payment.proof_path, 3600);
+        }
+        return { payment, proofUrl };
+      } catch (err) {
+        return { payment: null, proofUrl: "" };
       }
-    } catch {
-      setPayment(null);
-      setPaymentProofUrl("");
-    }
-  }, [orderId]);
+    },
+    enabled: !!orderId,
+  });
 
-  useEffect(() => {
-    loadOrder();
-    loadPayment();
-  }, [loadOrder, loadPayment]); // Added loadPayment to dependency array
+  // Extract payment variables safely for the UI
+  const payment = paymentData?.payment || null;
+  const paymentProofUrl = paymentData?.proofUrl || "";
 
   const sourceLabel = useMemo(() => {
     if (!order?.reference_source) return "—";
-
     if (order.reference_source === "recommendation") return "Recommendation";
     if (order.reference_source === "fallback_ai") return "Fallback AI";
-
     return order.reference_source;
   }, [order]);
+
+  // Handler to refresh payment data after a staff review
+  const handlePaymentReviewed = () => {
+    queryClient.invalidateQueries({ queryKey: ['payment', orderId] });
+  };
 
   return (
     <AppShell
@@ -159,9 +149,11 @@ export default function OrderDetailsPage() {
         Back to My Orders
       </button>
 
-      {errorMessage ? <ErrorStateCard message={errorMessage} /> : null}
+      {/* TanStack Error Handling */}
+      {isOrderError ? <ErrorStateCard message={orderError?.message || "Failed to load order"} /> : null}
 
-      {isLoading ? (
+      {/* TanStack Loading Handling */}
+      {isOrderLoading ? (
         <LoadingStateCard message="Loading order details..." />
       ) : !order ? (
         <ErrorStateCard message="Order not found." />
@@ -215,11 +207,28 @@ export default function OrderDetailsPage() {
             ) : null}
           </SectionCard>
 
+          {/* Payment Section */}
+          <SectionCard title="Payment Information">
+            {isPaymentLoading ? (
+              <div style={{ color: "#666666" }}>Loading payment details...</div>
+            ) : (
+              <PaymentSummaryCard payment={payment} proofUrl={paymentProofUrl} />
+            )}
+          </SectionCard>
+
+          {canManageStatus && payment ? (
+            <SectionCard title="Payment Review">
+              <PaymentReviewPanel
+                payment={payment}
+                onReviewed={handlePaymentReviewed}
+              />
+            </SectionCard>
+          ) : null}
+
           {canManageStatus ? (
             <StatusUpdatePanel
               orderId={order.id}
               currentStatus={order.status}
-              onUpdated={loadOrder}
             />
           ) : null}
 
@@ -240,18 +249,7 @@ export default function OrderDetailsPage() {
               }}
             />
           </SectionCard>
-          <SectionCard title="Payment">
-          <PaymentSummaryCard payment={payment} proofUrl={paymentProofUrl} />
-        </SectionCard>
 
-        {canManageStatus ? (
-          <SectionCard title="Payment Review">
-            <PaymentReviewPanel
-              payment={payment}
-              onReviewed={loadPayment}
-            />
-          </SectionCard>
-        ) : null}
           <SectionCard title="Cake Configuration">
             <KeyValueGrid data={order.cake_config} />
           </SectionCard>

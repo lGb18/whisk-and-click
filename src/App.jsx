@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import WizardPage from "./pages/WizardPage";
 import SummaryPage from "./pages/SummaryPage";
@@ -19,26 +19,28 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import RoleGuard from "./components/RoleGuard";
 import DashboardPage from "./pages/DashboardPage";
 import AccountPage from "./pages/AccountPage";
-import { Navigate } from "react-router-dom";
-export default function App() {
-  
+import { AnimatePresence } from "framer-motion";
+import AnimatedLayout from "./components/AnimatedLayout";
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
   return (
-    <AuthProvider>
-      <AppFlowProvider>
-      
-      <BrowserRouter>
-        <Routes>
+    // AnimatePresence is required for the "exit" animations to work
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        
+        {/* Wrap ALL your existing routes inside this single Layout Route */}
+        <Route element={<AnimatedLayout />}>
+          
           <Route path="/" element={<HomePage />} />
           <Route path="/wizard" element={<WizardPage />} />
-          <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true }} redirectTo = "/wizard"><SummaryPage /></OrderGuard>} />
-          <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true}} redirectTo = "/wizard"><RecommendationsPage /></OrderGuard>} />
+          <Route path="/summary" element={<OrderGuard require={{ cakeConfig: true }} redirectTo="/wizard"><SummaryPage /></OrderGuard>} />
+          <Route path="/recommendations" element={<OrderGuard require={{ cakeConfig: true}} redirectTo="/wizard"><RecommendationsPage /></OrderGuard>} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/my-orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>}/>
           <Route path="/fallback" element={<GeneratorPage />} />
-          {/* <Route path="/fallback" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><GeneratorPage /></OrderGuard>} /> */}
-          {/* <Route path="/order-confirmation" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><OrderConfirmationPage /></OrderGuard>} /> */}
-           <Route path="/order-confirmation" element={<OrderConfirmationPage/>}/>
-          {/* <Route path="/checkout" element={<OrderGuard require={{ cakeConfig: true, selectedCake: true }} redirectTo = "/wizard"><CheckoutPage /></OrderGuard>} /> */}
+          <Route path="/order-confirmation" element={<OrderConfirmationPage/>}/>
           <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>}/>
           <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>}/>  
           <Route path="/admin/orders" element={<ProtectedRoute><RoleGuard allow={["staff", "admin"]}><AdminOrdersPage/></RoleGuard></ProtectedRoute>}/>
@@ -46,9 +48,21 @@ export default function App() {
           <Route path="/admin/login" element={<Navigate to="/auth" replace />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}/>
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>}/>
-        </Routes>
-      </BrowserRouter>
-      
+        
+        </Route>
+
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppFlowProvider>
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
       </AppFlowProvider>
     </AuthProvider>
   );

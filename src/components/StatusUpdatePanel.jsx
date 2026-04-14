@@ -4,53 +4,37 @@ import {
   getStatusLabel,
 } from '../utils/orderStatusConfig';
 import { updateOrderStatus } from '../utils/orderQueries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export default function StatusUpdatePanel({
-  orderId,
-  currentStatus,
-  onUpdated,
-}) {
-  const nextStatuses = useMemo(
-    () => getNextStatuses(currentStatus),
-    [currentStatus]
-  );
-
+export default function StatusUpdatePanel({ orderId, currentStatus, onUpdated }) {
+  const nextStatuses = useMemo(() => getNextStatuses(currentStatus), [currentStatus]);
+  const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState(nextStatuses[0] ?? '');
   const [note, setNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: ({ newStatus, statusNote }) => updateOrderStatus({ orderId, newStatus, note: statusNote }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+      setNote('');
+    },
+    onError: (err) => {
+      setErrorMessage(err.message || 'Failed to update status.');
+    }
+  });
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     if (!selectedStatus) {
       setErrorMessage('Please select the next status.');
       return;
     }
-
-    setIsSubmitting(true);
     setErrorMessage('');
-
-    try {
-      await updateOrderStatus({
-        orderId,
-        newStatus: selectedStatus,
-        note,
-      });
-
-      setNote('');
-
-      const nextOptions = getNextStatuses(selectedStatus);
-      setSelectedStatus(nextOptions[0] ?? '');
-
-      if (onUpdated) {
-        await onUpdated();
-      }
-    } catch (error) {
-      setErrorMessage(error?.message ?? 'Failed to update order status.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    
+    mutation.mutate({ newStatus: selectedStatus, statusNote: note });
   }
 
   if (!nextStatuses.length) {
@@ -159,7 +143,7 @@ export default function StatusUpdatePanel({
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={mutation.isPending}
         style={{
           padding: '12px 16px',
           borderRadius: '10px',
@@ -167,11 +151,11 @@ export default function StatusUpdatePanel({
           background: '#E25D4D',
           color: '#FFFFFF',
           fontWeight: 600,
-          cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          opacity: isSubmitting ? 0.7 : 1,
+          cursor: mutation.isPending ? 'not-allowed' : 'pointer',
+          opacity: mutation.isPending ? 0.7 : 1,
         }}
       >
-        {isSubmitting ? 'Updating...' : 'Update Status'}
+        {mutation.isPending ? 'Updating...' : 'Update Status'}
       </button>
     </form>
   );

@@ -9,41 +9,35 @@ import {
 } from "../components/PageState";
 import { fetchMyOrders } from "../utils/orderQueries";
 import { useAuthSession } from "../hooks/useAuthSession";
+import { useQuery } from '@tanstack/react-query';
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
+  const { user } = useAuthSession();
   // const { reloadProfile } = useAuthSession();
 
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  // const [orders, setOrders] = useState([]);
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [errorMessage, setErrorMessage] = useState("");
 
 
-  useEffect(() => {
-    async function loadOrders() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const data = await fetchMyOrders();
-        setOrders(data);
-      } catch (error) {
-        setErrorMessage(error?.message ?? "Failed to load orders.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadOrders();
-  }, []);
+  const { 
+    data: orders = [], 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery({
+    queryKey: ['my-orders', user?.id], // Cache key
+    queryFn: fetchMyOrders,            // Your existing fetcher from utils
+    enabled: !!user?.id,               // Only run if we have a user
+    staleTime: 60000,
+  });
 
   return (
-    <AppShell
-      title="My Orders"
-      subtitle="Review your placed orders, statuses, and tracking details."
-    >
-      {errorMessage ? <ErrorStateCard message={errorMessage} /> : null}
+    <AppShell title="My Orders" subtitle="Review your placed orders and tracking details.">
+      {isError ? <ErrorStateCard message={error?.message || "Failed to load orders."} /> : null}
 
+      {/* isLoading is ONLY true on the very first fetch. No flicker on return! */}
       {isLoading ? (
         <LoadingStateCard message="Loading your orders..." />
       ) : orders.length === 0 ? (
@@ -54,9 +48,7 @@ export default function MyOrdersPage() {
             <OrderSummaryCard
               key={order.id}
               order={order}
-              onViewDetails={(selectedOrder) =>
-                navigate(`/orders/${selectedOrder.id}`)
-              }
+              onViewDetails={(selectedOrder) => navigate(`/orders/${selectedOrder.id}`)}
             />
           ))}
         </div>

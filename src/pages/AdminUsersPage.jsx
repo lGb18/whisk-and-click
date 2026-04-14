@@ -13,38 +13,22 @@ import {
   updateUserRole,
 } from "../utils/adminQueries";
 import { useAuthSession } from "../hooks/useAuthSession";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ROLE_OPTIONS = ["customer", "staff", "admin"];
 
 export default function AdminUsersPage() {
   const { user, reloadProfile } = useAuthSession();
 
-  const [profiles, setProfiles] = useState([]);
+  // const [profiles, setProfiles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [noteMap, setNoteMap] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
 
-  async function loadProfiles() {
-    setIsLoading(true);
-    setErrorMessage("");
 
-    try {
-      const data = await fetchAllProfiles();
-      setProfiles(data);
-    } catch (error) {
-      setErrorMessage(error?.message ?? "Failed to load profiles.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-
-  useEffect(() => {
-    loadProfiles();
-  }, []);
 
   function getNote(userId) {
     return noteMap[userId] ?? "";
@@ -57,66 +41,59 @@ export default function AdminUsersPage() {
     }));
   }
 
-  async function handleRoleChange(targetUserId, newRole) {
-    setUpdatingId(targetUserId);
-    setErrorMessage("");
-    setSuccessMessage("");
+  const queryClient = useQueryClient();
 
-    try {
-      await updateUserRole({
-        targetUserId,
-        newRole,
-        note: getNote(targetUserId),
-      });
+  // Fetch profiles
+  const { data: profiles = [], isLoading } = useQuery({
+    queryKey: ['admin-profiles'],
+    queryFn: fetchAllProfiles,
+  });
 
-      setProfiles((prev) =>
-        prev.map((profile) =>
-          profile.id === targetUserId
-            ? { ...profile, role: newRole }
-            : profile
-        )
-      );
+  // Mutate Role
+  const roleMutation = useMutation({
+  mutationFn: ({ targetUserId, newRole, note }) => updateUserRole({ targetUserId, newRole, note }),
+  
+  // 1. Trigger BEFORE the fetch finishes
+  onMutate: async ({ targetUserId, newRole }) => {
+    // Cancel any outgoing refetches so they don't overwrite our optimistic update
+    await queryClient.cancelQueries({ queryKey: ['admin-profiles'] });
 
-      await loadProfiles();
-      setSuccessMessage("User role updated successfully.");
-    } catch (error) {
-      setErrorMessage(error?.message ?? "Failed to update user role.");
-    } finally {
-      setUpdatingId(null);
+    const previousProfiles = queryClient.getQueryData(['admin-profiles']);
+
+    queryClient.setQueryData(['admin-profiles'], (old) => 
+      old.map(profile => 
+        profile.id === targetUserId ? { ...profile, role: newRole } : profile
+      )
+    );
+
+    return { previousProfiles };
+  },
+  
+  // 2. If the mutation fails, roll the UI back to the snapshot!
+  onError: (err, newTodo, context) => {
+    queryClient.setQueryData(['admin-profiles'], context.previousProfiles);
+  },
+  
+  // 3. Always refetch after error or success to ensure 100% sync
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+  },
+});
+
+  // Mutate Access
+  const accessMutation = useMutation({
+    mutationFn: ({ targetUserId, isActive, note }) => updateUserAccessState({ targetUserId, isActive, note }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
     }
+  });
+
+  function handleRoleChange(targetUserId, newRole) {
+    roleMutation.mutate({ targetUserId, newRole, note: getNote(targetUserId) });
   }
 
-  async function handleAccessToggle(targetUserId, nextState) {
-    setUpdatingId(targetUserId);
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    try {
-      await updateUserAccessState({
-        targetUserId,
-        isActive: nextState,
-        note: getNote(targetUserId),
-      });
-
-      setProfiles((prev) =>
-        prev.map((profile) =>
-          profile.id === targetUserId
-            ? {
-                ...profile,
-                is_active: nextState,
-                disabled_at: nextState ? null : new Date().toISOString(),
-              }
-            : profile
-        )
-      );
-
-      await loadProfiles();
-      setSuccessMessage("User access state updated successfully.");
-    } catch (error) {
-      setErrorMessage(error?.message ?? "Failed to update user access state.");
-    } finally {
-      setUpdatingId(null);
-    }
+  function handleAccessToggle(targetUserId, nextState) {
+    accessMutation.mutate({ targetUserId, isActive: nextState, note: getNote(targetUserId) });
   }
 
   const filteredProfiles = useMemo(() => {

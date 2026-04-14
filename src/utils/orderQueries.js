@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabaseClient';
+import { withTimeout } from './fetchHelper';
 
 export async function fetchMyOrders() {
-  const { data, error } = await supabase
+  const { data, error } = await withTimeout(supabase
     .from('orders')
     .select(`
       id,
@@ -16,14 +17,14 @@ export async function fetchMyOrders() {
       status,
       status_updated_at
     `)
-    .order('created_at', { ascending: false });
-
+    .order('created_at', { ascending: false })
+  );
   if (error) throw error;
   return data ?? [];
 }
 
 export async function fetchOrderById(orderId) {
-  const { data, error } = await supabase
+  const { data, error } = await withTimeout(supabase
     .from('orders')
     .select(`
       id,
@@ -53,8 +54,8 @@ export async function fetchOrderById(orderId) {
       )
     `)
     .eq('id', orderId)
-    .single();
-
+    .single()
+    )
   if (error) throw error;
 
   const sortedHistory = [...(data?.order_status_history ?? [])].sort(
@@ -68,7 +69,7 @@ export async function fetchOrderById(orderId) {
 }
 
 export async function fetchAllOrdersForAdmin() {
-  const { data, error } = await supabase
+  const { data, error } = await withTimeout(supabase
     .from('orders')
     .select(`
       id,
@@ -80,8 +81,8 @@ export async function fetchAllOrdersForAdmin() {
       customization,
       checkout_details
     `)
-    .order('created_at', { ascending: false });
-
+    .order('created_at', { ascending: false })
+  );
   if (error) throw error;
   return data ?? [];
 }

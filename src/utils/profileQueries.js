@@ -1,10 +1,11 @@
 import { supabase } from "../lib/supabaseClient";
 
-export async function updateOwnProfile({ userId, fullName }) {
+export async function updateOwnProfile({ userId, fullName, phoneNumber }) {
   const { data, error } = await supabase
     .from("profiles")
     .update({
       full_name: fullName,
+      phone_number: phoneNumber,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)

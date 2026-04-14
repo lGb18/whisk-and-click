@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient();
   const [profile, setProfile] = useState(null);
   const [role, setRole] = useState("customer");
   const [session, setSession] = useState(null);
@@ -34,14 +36,14 @@ export function AuthProvider({ children }) {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, is_active, created_at, updated_at, disabled_at")
+      .select("id, full_name, phone_number, email, role, is_active, created_at, updated_at, disabled_at")
       .eq("id", currentUserId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Profile load error:", error.message);
-      setProfile(null);
-      setRole("customer");
+      // setProfile(null);
+      // setRole("customer");
       return null;
     }
 
@@ -51,28 +53,6 @@ export function AuthProvider({ children }) {
     return data;
   }
 
-  async function ensureProfile(currentUser) {
-    if (!currentUser) return;
-
-    const payload = {
-      id: currentUser.id,
-      email: currentUser.email || null,
-    };
-
-    const metadataFullName = currentUser.user_metadata?.full_name?.trim();
-
-    if (metadataFullName) {
-      payload.full_name = metadataFullName;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .upsert(payload, { onConflict: "id" });
-
-    if (error) {
-      console.error("Profile upsert error:", error.message);
-    }
-  }
 
   async function enforceActiveProfile(currentProfile) {
     if (currentProfile && currentProfile.is_active === false) {
@@ -85,7 +65,7 @@ export function AuthProvider({ children }) {
     return true;
   }
 
-  async function reloadProfile() {
+  async function reloadProfile(force = false) {
     if (!user?.id) return null;
     if (!force && !isProfileStale()) return profile;
 
@@ -117,7 +97,6 @@ export function AuthProvider({ children }) {
       setUser(sessionData?.user ?? null);
 
       if (sessionData?.user) {
-        await ensureProfile(sessionData.user);
         const profileData = await loadOwnProfile(sessionData.user.id);
         await enforceActiveProfile(profileData);
       } else {
@@ -139,14 +118,13 @@ export function AuthProvider({ children }) {
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
-        await ensureProfile(nextSession.user);
         const profileData = await loadOwnProfile(nextSession.user.id);
         await enforceActiveProfile(profileData);
       } else {
         setProfile(null);
         setRole("customer");
       }
-
+      queryClient.invalidateQueries();
       setIsAuthLoading(false);
     });
 
@@ -156,12 +134,13 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  async function signUp({ email, password }) {
+  async function signUp({ email, password, options }) {
     setAuthMessage("");
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options,
     });
 
     if (error) {
@@ -190,15 +169,47 @@ export function AuthProvider({ children }) {
 
   async function signOut() {
     setAuthMessage("");
+    let wasDeadlocked = false;
+    
+    try {
+      // 1. Try normal signout
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => 
+          setTimeout(() => {
+            wasDeadlocked = true; // Flag that Supabase is frozen
+            reject(new Error("Signout network timeout"));
+          }, 3000)
+        )
+      ]);
+    } catch (error) {
+      console.warn("Server signout delayed or failed, forcing local wipe:", error);
+    } finally {
+      // 2. Clear React and TanStack state
+      if (queryClient) {
+        queryClient.clear();
+      }
+      await clearAuthState();
 
-    const { error } = await supabase.auth.signOut();
+      // 3. NUKE local storage to prevent Zombie Sessions
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          // Manually delete the Supabase auth token
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to clear localStorage:", e);
+      }
 
-    if (error) {
-      setAuthMessage(error.message);
-      throw error;
+      // 4. If Supabase was deadlocked, React Router's navigate() is not enough.
+      if (wasDeadlocked) {
+        console.warn("Hard reloading to destroy frozen Supabase client...");
+        window.location.href = "/auth";
+      }
     }
-
-    await clearAuthState();
   }
 
   const value = useMemo(
@@ -218,44 +229,70 @@ export function AuthProvider({ children }) {
     [session, user, isAuthLoading, authMessage, profile, role]
   );
   useEffect(() => {
-  if (!user?.id) return;
+    if (!user?.id) return;
 
-  let cancelled = false;
+    let cancelled = false;
+    let lastVisibleTime = Date.now();
+    const DEEP_SLEEP_THRESHOLD = 65000; // 5 minutes
 
-  async function revalidateProfileAccess() {
-    if (!isProfileStale()) return;
+    // 1. Maintain a rolling timestamp of when the app was last confirmed active
+    const heartbeatInterval = window.setInterval(() => {
+      // If the interval paused and skipped heavily due to OS sleep, catch it here
+      if (Date.now() - lastVisibleTime > DEEP_SLEEP_THRESHOLD) {
+        console.warn("Heartbeat skipped significantly. Forcing reload...");
+        window.location.reload();
+      } else {
+        lastVisibleTime = Date.now();
+      }
+    }, 15000); // Check every 15 seconds
+
+    // 2. Profile Revalidation Logic (Throttled)
+    let isRevalidating = false;
+    async function revalidateProfileAccess() {
+      if (isRevalidating || isProfileStale() || cancelled) return;
+      
+      isRevalidating = true;
       try {
         const profileData = await loadOwnProfile(user.id);
-
         if (cancelled) return;
-
         await enforceActiveProfile(profileData);
       } catch (error) {
         console.error("Profile revalidation error:", error);
+      } finally {
+        // Simple debounce to prevent overlapping calls
+        setTimeout(() => { isRevalidating = false; }, 2000);
       }
     }
 
-    function handleWindowFocus() {
-      revalidateProfileAccess();
+    // 3. The true wake-up handler
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        // 1. The user left the tab or the computer is sleeping.
+        // STOP the Supabase background timers so they don't corrupt the locks.
+        supabase.auth.stopAutoRefresh();
+      } else if (document.visibilityState === "visible") {
+        // 2. The user is back.
+        // RESTART the timers safely.
+        supabase.auth.startAutoRefresh();
+        
+        // 3. Force a clean session check now that the thread is awake.
+        supabase.auth.getSession();
+      }
     }
 
-    function handleVisibilityChange() {
+    // Standard background revalidation for active sessions
+    const revalidateInterval = window.setInterval(() => {
       if (document.visibilityState === "visible") {
         revalidateProfileAccess();
       }
-    }
+    }, 60000); // 1 minute
 
-    const intervalId = window.setInterval(() => {
-      revalidateProfileAccess();
-    }, 30000); // every 30 seconds
-
-    window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", handleWindowFocus);
+      window.clearInterval(heartbeatInterval);
+      window.clearInterval(revalidateInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [user?.id]);

@@ -10,36 +10,30 @@ import {
 import { fetchAllOrdersForAdmin } from "../utils/orderQueries";
 import { ORDER_STATUS } from "../utils/orderStatusConfig";
 import { useAuthSession } from "../hooks/useAuthSession";
+import { useQuery } from '@tanstack/react-query';
 
 export default function AdminOrdersPage() {
   const navigate = useNavigate();
   const { reloadProfile } = useAuthSession();
 
-  const [orders, setOrders] = useState([]);
+  // const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
 
-  useEffect(() => {
-    async function loadOrders() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const data = await fetchAllOrdersForAdmin();
-        setOrders(data);
-      } catch (error) {
-        setErrorMessage(error?.message ?? "Failed to load admin orders.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadOrders();
-  }, []);
+  const { 
+    data: orders = [], 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery({
+    queryKey: ['admin-orders'], 
+    queryFn: fetchAllOrdersForAdmin,
+    staleTime: 60000,
+  });
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -124,7 +118,7 @@ export default function AdminOrdersPage() {
         </select>
       </div>
 
-      {errorMessage ? <ErrorStateCard message={errorMessage} /> : null}
+      {isError ? <ErrorStateCard message={error?.message || "Failed to load admin orders."} /> : null}
 
       {isLoading ? (
         <LoadingStateCard message="Loading admin orders..." />
