@@ -141,7 +141,7 @@ export default function GeneratorPage() {
           marginTop: "var(--space-sm)" 
         }}>
           
-          <div style={{ display: "flex", gap: "var(--space-md)", width: "100%" }}>
+          <div className="order-actions" style={{ display: "flex", gap: "var(--space-md)", width: "100%" }}>
             <SecondaryButton 
               onClick={generateFallbackImage}
               style={{ flex: 1 }}
@@ -152,7 +152,7 @@ export default function GeneratorPage() {
 
             <PrimaryButton 
               onClick={() => handleFallbackDesign(fallbackResult)}
-              style={{ flex: 2 }} // Gives more visual weight to the primary action
+              style={{ flex: 2 }} 
               disabled={fallbackStatus !== "success"}
             >
               Select & Customize

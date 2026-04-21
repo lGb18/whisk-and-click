@@ -56,11 +56,9 @@ export default function RecommendationPage() {
             ))}
           </div>
         ) : (
-          <div className="card" style={{ padding: "var(--space-2xl)", textAlign: "center" }}>
-            <h3 style={{ fontSize: "var(--font-h2-size)", margin: "0 0 var(--space-sm) 0" }}>No exact bakeshop matches found.</h3>
-            <p style={{ color: "var(--text-secondary)", marginBottom: "var(--space-lg)" }}>
-              Your taste is wonderfully unique! Let's build a custom concept.
-            </p>
+          <div className="card" style={{ padding: "var(--space-xl)", textAlign: "center" }}>
+            <h3 style={{ fontSize: "var(--font-h2-size)" }}>No exact bakeshop matches found.</h3>
+            <p>Your taste is wonderfully unique! Let's build a custom concept.</p>
           </div>
         )}
 

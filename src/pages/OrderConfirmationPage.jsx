@@ -89,7 +89,8 @@ export default function OrderConfirmationPage() {
             <div className="card summary-card" style={{ padding: "var(--space-md)" }}>
               
               <div style={{ 
-                height: "360px", 
+                aspectRatio: "4/3",
+                width: "100%", 
                 backgroundColor: "var(--surface-muted)", 
                 borderRadius: "var(--radius-card)", 
                 overflow: "hidden",

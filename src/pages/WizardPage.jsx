@@ -89,7 +89,7 @@ export default function WizardPage() {
         className="container-narrow" 
         style={{ 
           maxWidth: "820px", 
-          height: "80vh", 
+          minHeight: "70vh", 
           display: "flex", 
           flexDirection: "column", 
           gap: "24px", 
@@ -116,6 +116,7 @@ export default function WizardPage() {
             flexDirection: "column", 
             gap: "16px", 
             height: "40vh", 
+            flex: "1",
             overflowY: "auto", 
             backgroundColor: "#FFFFFF", 
             padding: "10px", 
@@ -162,23 +163,23 @@ export default function WizardPage() {
           )}
         </div>
 
-        <div style={{ display: "flex", gap: "16px", padding: "10px", flexDirection: "row" , justifyContent: "flex-end"}}>
-          <div style={{ display: "flex", gap: "16px" }}>
-            <SecondaryButton 
-              onClick={handleReset} 
-              style={{ color: "red", borderColor: "red" }}
-            >
-              Start Over
-            </SecondaryButton>
-            
-            <SecondaryButton onClick={() => navigate("/")}>
-              Back
-            </SecondaryButton>
-            <PrimaryButton onClick={() => navigate("/summary")}>
-              Skip to Summary
-            </PrimaryButton>
+          <div className="order-actions" style={{ display: "flex", gap: "16px", paddingTop: "10px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <SecondaryButton 
+                onClick={handleReset} 
+                style={{ color: "red", borderColor: "red", flex: "1 1 auto" }}
+              >
+                Start Over
+              </SecondaryButton>
+              
+              <SecondaryButton onClick={() => navigate("/")} style={{ flex: "1 1 auto" }}>
+                Back
+              </SecondaryButton>
+              
+              <PrimaryButton onClick={() => navigate("/summary")} style={{ flex: "2 1 auto" }}>
+                Skip to Summary
+              </PrimaryButton>
           </div>
-        </div>
+        
       </div>
     </div>
   );

@@ -79,7 +79,7 @@ export default function SummaryPage() {
           )}
 
           {/* Action Bar */}
-          <div style={{ 
+          <div className="order-actions" style={{ 
             display: "flex", 
             gap: "var(--space-md)", 
             marginTop: "var(--space-sm)",
