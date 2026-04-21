@@ -211,7 +211,32 @@ export function AuthProvider({ children }) {
       }
     }
   }
+  // --- PASSWORD RECOVERY FLOW ---
+  async function resetPassword(email) {
+    setAuthMessage("");
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?type=recovery`,
+    });
 
+    if (error) {
+      setAuthMessage(error.message);
+      throw error;
+    }
+    return data;
+  }
+
+  async function updatePassword(newPassword) {
+    setAuthMessage("");
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+      throw error;
+    }
+    return data;
+  }
   const value = useMemo(
     () => ({
       session,
@@ -225,6 +250,8 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       reloadProfile,
+      resetPassword,
+      updatePassword,
     }),
     [session, user, isAuthLoading, authMessage, profile, role]
   );

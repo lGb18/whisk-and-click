@@ -66,7 +66,7 @@ export const constraints = [
     message:
       "Premium flavors typically cost more than basic vanilla or chocolate at a low budget.",
     suggestion:
-      "Choose a simpler flavor (e.g., vanilla or chocolate) or increase your budget."
+      "Choose a simpler flavor (vanilla or chocolate) or increase your budget."
   },
   // {
   //   id: "RULE-101",

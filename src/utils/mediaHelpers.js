@@ -1,5 +1,3 @@
-import { cakeCatalog } from "../data/cakeCatalog"; // Add this import!
-
 export function normalizeImageUrl(value) {
   if (!value) return "";
   const trimmed = String(value).trim();
@@ -7,7 +5,7 @@ export function normalizeImageUrl(value) {
   return trimmed;
 }
 
-export function getOrderReferencePreview(order) {
+export function getOrderReferencePreview(order, blueprints = []) {
   if (!order) {
     return {
       hasImage: false,
@@ -28,12 +26,14 @@ export function getOrderReferencePreview(order) {
   }
 
   if (order.reference_source === "recommendation" && order.cake_reference_id) {
-    const matchedCake = cakeCatalog.find(c => c.cake_id === order.cake_reference_id);
-    if (matchedCake && matchedCake.image) {
+    // Search the live Supabase blueprints instead of the old static catalog
+    const matchedCake = blueprints.find(c => c.id === order.cake_reference_id);
+    
+    if (matchedCake && matchedCake.image_url) {
       return {
         hasImage: true,
-        imageUrl: matchedCake.image,
-        alt: `Bakery Catalog: ${matchedCake.title || matchedCake.flavor}`,
+        imageUrl: matchedCake.image_url, // Fixed to use Supabase schema
+        alt: `Bakery Catalog: ${matchedCake.name || "Signature Cake"}`, // Fixed to use 'name'
         fallbackLabel: "Catalog image missing",
       };
     }

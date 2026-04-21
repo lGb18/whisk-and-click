@@ -6,6 +6,7 @@ import { CAKE_IMAGES, HERO_SLIDES } from "../data/assets";
 import { useBlueprints } from "../hooks/useBlueprints";
 import { useCarousel } from "../hooks/useCarousel";
 import { useBestSellers } from "../hooks/useBestSellers";
+import PublicHeader from "../components/PublicHeader";
 
 const CategoryCard = ({ title, imageUrl, onClick }) => (
   <button 
@@ -120,8 +121,8 @@ const HeroCarousel = () => {
       onMouseLeave={() => setIsPaused(false)} 
       style={{
         width: "100%",
-        maxWidth: "540px",
-        aspectRatio: "4/5",
+        maxWidth: "460px",
+        aspectRatio: "1/1",
         backgroundColor: "var(--surface-muted)",
         borderRadius: "var(--radius-card)", 
         boxShadow: "var(--shadow-card)",
@@ -187,10 +188,10 @@ const HeroSection = ({ onStart, onBrowse }) => (
       justifyContent: "space-between", 
       gap: "var(--space-3xl)", 
       flexWrap: "wrap",
-      minHeight: "max(600px, calc(100vh - var(--space-2xl) * 2))",
-      paddingTop: "var(--space-xl)",
+      minHeight: "auto",
+      paddingTop: "var(--space-md)",
       paddingBottom: "var(--space-xl)",
-      margin: "var(--space-lg) auto"
+      margin: "0 auto var(--space-xl) auto"
     }}
   >
     <div style={{ 
@@ -267,8 +268,8 @@ export default function HomePage() {
 
   return (
     <main className="page-shell" style={{ padding: "0 var(--space-lg)" }}>
-      <div style={{ maxWidth: "var(--layout-reco-grid)", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-3xl)" }}>
-        
+      <div style={{ maxWidth: "var(--layout-reco-grid)", margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
+        <PublicHeader />
         <HeroSection onStart={() => navigate("/wizard")} onBrowse={() => navigate("/catalog")}  />
 
         <button 
@@ -289,10 +290,10 @@ export default function HomePage() {
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
             <h2 style={{ color: "var(--surface)", fontSize: "var(--font-h1-size)", fontFamily: "var(--font-heading)", margin: 0 }}>
-              Buy 2 Get 1 Free
+              Check out deals!
             </h2>
             <p style={{ color: "var(--surface)", opacity: 0.9, margin: 0, fontSize: "var(--font-body-size)" }}>
-              Valentine's Special • 7-14 February 2026
+              Available for a limited time. Don't miss out on our sweetest offers.
             </p>
             <span style={{ 
               display: "inline-flex", 
@@ -329,7 +330,7 @@ export default function HomePage() {
         <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", paddingBottom: "var(--space-3xl)" }}>
           <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "var(--space-sm)" }}>
             <h2 style={{ margin: 0, fontSize: "var(--font-h2-size)", fontWeight: "var(--font-h2-weight)", fontFamily: "var(--font-heading)" }}>
-              Best Seller Categories
+              Best Sellers
             </h2>
             
             <button 
@@ -340,7 +341,7 @@ export default function HomePage() {
               }} 
               onClick={() => navigate("/best-sellers")}
             >
-              See All Best Sellers &rarr;
+              See All &rarr;
             </button>
           </header>
 

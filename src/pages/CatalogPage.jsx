@@ -1,67 +1,62 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cakeCatalog } from '../data/cakeCatalog';
-import { useAppFlow } from '../state/AppFlow'; // Import your flow state
-
-// --- HELPER FUNCTIONS ---
-const getPriceEstimation = (budget) => {
-  const prices = { low: "1.00", medium: "2.00", high: "3.00" };
-  return prices[budget?.toLowerCase()] || "1.00";
-};
+import { useAppFlow } from '../state/AppFlow'; 
+import PublicHeader from "../components/PublicHeader";
+import { useBlueprints } from '../hooks/useBlueprints'; // FIXED: Read from Live DB
 
 const generateTitle = (cake) => {
-  if (cake.title && cake.title.trim() !== "") return cake.title;
-  const flavor = cake.flavor && cake.flavor !== "unknown" ? cake.flavor : "Signature";
-  const style = cake.style && cake.style !== "unknown" ? cake.style : "Classic";
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-  return `${capitalize(style)} ${capitalize(flavor)} Cake`;
+  if (cake?.name && cake.name.trim() !== "") return cake.name;
+  const flavorStr = cake?.metadata?.inferred_flavor || "Signature";
+  const styleStr = cake?.metadata?.theme || cake?.metadata?.frosting_style || "Classic";
+  const capitalize = (str) => {
+    if (!str) return "";
+    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  };
+  return `${capitalize(styleStr)} ${capitalize(flavorStr)} Cake`;
 };
 
 export default function CatalogPage() {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("All");
   
-  // Destructure the setters from your context
   const { setSelectedCake, setCakeConfig } = useAppFlow();
+  
+  const { data: blueprints = [], isLoading, error } = useBlueprints();
 
-  const filterCategories = useMemo(() => {
-    const validFlavors = cakeCatalog
-      .map(cake => cake.flavor)
-      .filter(flavor => flavor && flavor !== "unknown");
-    const uniqueFlavors = [...new Set(validFlavors)].map(f => f.charAt(0).toUpperCase() + f.slice(1));
-    return ["All", ...uniqueFlavors];
-  }, []);
+  const filterCategories = ["All", "Classic", "Specialty", "Premium"];
 
   const displayedCakes = useMemo(() => {
-    if (activeFilter === "All") return cakeCatalog;
-    return cakeCatalog.filter(
-      cake => cake.flavor?.toLowerCase() === activeFilter.toLowerCase()
-    );
-  }, [activeFilter]);
+    if (activeFilter === "All") return blueprints;
+    
+    return blueprints.filter(cake => {
+      if (activeFilter === "Classic") return cake.flavor <= 3;
+      if (activeFilter === "Specialty") return cake.flavor > 3 && cake.flavor < 8;
+      if (activeFilter === "Premium") return cake.flavor >= 8;
+      return true;
+    });
+  }, [activeFilter, blueprints]);
 
-  // --- THE HANDLER ---
-  // This bridges the catalog data to your Order Confirmation flow
   const handleSelectCake = (cake) => {
-    // 1. Set the exact catalog item as the selected reference
     setSelectedCake(cake);
 
-    // 2. Pre-fill the cakeConfig so the confirmation page and createOrder function have the data
     setCakeConfig({
-      occasion: cake.occasion !== "unknown" ? cake.occasion : "",
-      flavor: cake.flavor !== "unknown" ? cake.flavor : "",
-      style: cake.style !== "unknown" ? cake.style : "",
-      budget: cake.budget !== "unknown" ? cake.budget : "",
-      size_category: cake.size_category !== "unknown" ? cake.size_category : "",
+      form_factor: cake.form_factor,
+      complexity: cake.complexity,
+      aesthetic: cake.aesthetic,
+      flavor: cake.flavor,
+      primary_color: cake.primary_color
     });
 
-    // 3. Navigate directly to the confirmation/customization page
-    navigate("/order-confirmation"); // Make sure this matches your actual route path!
+    navigate("/order-confirmation"); 
   };
+
+  if (isLoading) return <div className="page-shell"><PublicHeader /><p style={{textAlign:"center"}}>Loading catalog...</p></div>;
+  if (error) return <div className="page-shell"><PublicHeader /><p style={{textAlign:"center", color:"red"}}>Failed to load catalog.</p></div>;
 
   return (
     <main className="page-shell">
       <div className="container-reco layout-stack">
-        
+        <PublicHeader />
         <header style={{ textAlign: "center", marginBottom: "var(--space-md)" }}>
           <h1 className="page-title">Shop Catalog</h1>
           <p className="page-subtitle" style={{ marginTop: "var(--space-sm)", maxWidth: "600px", margin: "var(--space-sm) auto 0" }}>
@@ -72,11 +67,8 @@ export default function CatalogPage() {
         <nav 
           aria-label="Product categories"
           style={{ 
-            display: "flex", 
-            gap: "var(--space-sm)", 
-            justifyContent: "center", 
-            flexWrap: "wrap",
-            marginBottom: "var(--space-lg)" 
+            display: "flex", gap: "var(--space-sm)", justifyContent: "center", 
+            flexWrap: "wrap", marginBottom: "var(--space-lg)" 
           }}
         >
           {filterCategories.map(category => (
@@ -94,43 +86,22 @@ export default function CatalogPage() {
         <div className="category-grid">
           {displayedCakes.map((cake) => {
             const displayTitle = generateTitle(cake);
-            const price = getPriceEstimation(cake.budget);
 
             return (
               <article 
-                key={cake.cake_id} 
+                key={cake.id}
                 className="card" 
                 style={{ 
-                  display: "flex", 
-                  flexDirection: "column", 
-                  overflow: "hidden",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  cursor: "pointer"
+                  display: "flex", flexDirection: "column", overflow: "hidden",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease", cursor: "pointer"
                 }}
                 onClick={() => handleSelectCake(cake)}
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && handleSelectCake(cake)}
               >
                 <div style={{ height: "260px", backgroundColor: "var(--surface-muted)", position: "relative" }}>
-                  <div style={{
-                    position: "absolute",
-                    top: "var(--space-sm)",
-                    left: "var(--space-sm)",
-                    backgroundColor: "var(--surface)",
-                    color: "var(--text-primary)",
-                    padding: "4px 12px",
-                    borderRadius: "16px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    textTransform: "capitalize",
-                    boxShadow: "var(--shadow-card-soft)",
-                    zIndex: 2
-                  }}>
-                    {cake.size_category} Size
-                  </div>
-
                   <img 
-                    src={cake.image} 
+                    src={cake.image_url} // FIXED: Use DB image path
                     alt={`Photo of ${displayTitle}`} 
                     loading="lazy"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }} 
@@ -148,14 +119,10 @@ export default function CatalogPage() {
                       {displayTitle}
                     </h2>
                     <span style={{ color: "var(--primary)", fontWeight: "600", fontSize: "18px" }}>
-                      {price}
+                      ₱{cake.base_price}
                     </span>
                   </div>
                   
-                  <p className="caption" style={{ textTransform: "capitalize", margin: "4px 0 0 0" }}>
-                    {cake.occasion !== "unknown" ? cake.occasion : "Any Occasion"} • {cake.flavor !== "unknown" ? cake.flavor : "Signature Blend"}
-                  </p>
-
                   <div style={{ marginTop: "auto", paddingTop: "var(--space-md)" }}>
                     <button 
                       className="primary-button" 

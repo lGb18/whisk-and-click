@@ -16,13 +16,13 @@ export default function AdminOrdersPage() {
   const navigate = useNavigate();
   const { reloadProfile } = useAuthSession();
 
-  // const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  // const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10; 
 
   const { 
     data: orders = [], 
@@ -55,6 +55,16 @@ export default function AdminOrdersPage() {
     });
   }, [orders, statusFilter, sourceFilter, searchTerm]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, sourceFilter, searchTerm]);
+
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <AppShell
       title="Admin Orders"
@@ -66,6 +76,7 @@ export default function AdminOrdersPage() {
           gap: "12px",
           flexWrap: "wrap",
           alignItems: "center",
+          marginBottom: "var(--space-md)"
         }}
       >
         <input
@@ -125,17 +136,52 @@ export default function AdminOrdersPage() {
       ) : filteredOrders.length === 0 ? (
         <EmptyStateCard message="No orders found for this filter." />
       ) : (
-        <div style={{ display: "grid", gap: "12px" }}>
-          {filteredOrders.map((order) => (
-            <OrderSummaryCard
-              key={order.id}
-              order={order}
-              onViewDetails={(selectedOrder) =>
-                navigate(`/orders/${selectedOrder.id}`)
-              }
-            />
-          ))}
-        </div>
+        <>
+          <div style={{ display: "grid", gap: "12px" }}>
+            {paginatedOrders.map((order) => (
+              <OrderSummaryCard
+                key={order.id}
+                order={order}
+                onViewDetails={(selectedOrder) =>
+                  navigate(`/orders/${selectedOrder.id}`)
+                }
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center", 
+              marginTop: "var(--space-xl)",
+              padding: "var(--space-md)",
+              backgroundColor: "#FFFFFF",
+              borderRadius: "12px",
+              border: "1px solid #ECECEC"
+            }}>
+              <button 
+                className="secondary-button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                &larr; Previous
+              </button>
+              
+              <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button 
+                className="secondary-button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next &rarr;
+              </button>
+            </div>
+          )}
+        </>
       )}
     </AppShell>
   );

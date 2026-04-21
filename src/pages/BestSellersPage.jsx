@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppFlow } from '../state/AppFlow';
 import { useBlueprints } from '../hooks/useBlueprints'; // The hook we built in Sprint 1
 import { useBestSellers } from '../hooks/useBestSellers';
-
+import PublicHeader from "../components/PublicHeader";
 // Uses the new database schema
 const generateTitle = (cake) => {
   if (cake?.name && cake.name.trim() !== "") return cake.name;
@@ -44,7 +44,7 @@ export default function BestSellersPage() {
   return (
     <main className="page-shell">
       <div className="container-reco layout-stack">
-        
+        <PublicHeader />
         <header style={{ display: "flex", alignItems: "baseline", gap: "var(--space-md)" }}>
           <button 
             className="secondary-button" 

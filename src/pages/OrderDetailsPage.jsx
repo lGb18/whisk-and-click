@@ -14,7 +14,7 @@ import { fetchOrderById } from "../utils/orderQueries";
 import { fetchPaymentByOrderId, getPaymentProofSignedUrl } from "../utils/paymentQueries";
 import { getStatusLabel } from "../utils/orderStatusConfig";
 import { useAuthSession } from "../hooks/useAuthSession";
-
+import { useBlueprints } from '../hooks/useBlueprints';
 // Translates the 1-9 math vectors
 function translateVectorConfig(config) {
   if (!config) return {};
@@ -69,7 +69,6 @@ function formatDateTime(value) {
   });
 }
 
-// UI Polish: Make the grid look like a clean receipt
 function KeyValueGrid({ data }) {
   const entries = Object.entries(data ?? {}).filter(
     ([, value]) =>
@@ -116,7 +115,7 @@ export default function OrderDetailsPage() {
   const { role } = useAuthSession();
 
   const canManageStatus = role === "staff" || role === "admin";
-
+  const { data: blueprints = [] } = useBlueprints();
   const { 
     data: order, 
     isLoading: isOrderLoading, 
@@ -255,7 +254,7 @@ export default function OrderDetailsPage() {
               </SectionCard>
 
               <SectionCard title="Visual Reference">
-                <OrderReferencePreview order={order} />
+                <OrderReferencePreview order={order} blueprints={blueprints} />
               </SectionCard>
             </div>
 

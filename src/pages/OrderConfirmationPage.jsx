@@ -195,7 +195,7 @@ export default function OrderConfirmationPage() {
                 <span>Cake Message (Optional)</span>
                 <input
                   type="text"
-                  placeholder="e.g., Happy Birthday!"
+                  placeholder="Happy Birthday!"
                   value={customizationDraft.cakeMessage}
                   onChange={(e) => setCustomizationDraft(prev => ({ ...prev, cakeMessage: e.target.value }))}
                   style={{ backgroundColor: "var(--surface-muted)", border: "none" }}
@@ -209,7 +209,7 @@ export default function OrderConfirmationPage() {
               <label className="form-field">
                 <span>Special Instructions</span>
                 <textarea
-                  placeholder="Any dietary restrictions or specific design tweaks? (e.g., Less sweet, no nuts)"
+                  placeholder="Any dietary restrictions or specific design tweaks? (Less sweet)"
                   rows={4}
                   value={customizationDraft.specialInstructions}
                   onChange={(e) => setCustomizationDraft(prev => ({ ...prev, specialInstructions: e.target.value }))}

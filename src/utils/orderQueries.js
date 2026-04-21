@@ -76,11 +76,15 @@ export async function fetchAllOrdersForAdmin() {
       user_id,
       created_at,
       reference_source,
-      status,
-      status_updated_at,
+      cake_reference_id,
+      fallback_prompt,
+      fallback_image_url,
+      cake_config,
       customization,
-      checkout_details
-    `)
+      checkout_details,
+      status,
+      status_updated_at
+    `) // Added all the missing payload columns!
     .order('created_at', { ascending: false })
   );
   if (error) throw error;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   getNextStatuses,
   getStatusLabel,
@@ -9,17 +9,28 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 export default function StatusUpdatePanel({ orderId, currentStatus, onUpdated }) {
   const nextStatuses = useMemo(() => getNextStatuses(currentStatus), [currentStatus]);
   const queryClient = useQueryClient();
+  
   const [selectedStatus, setSelectedStatus] = useState(nextStatuses[0] ?? '');
   const [note, setNote] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Sync the dropdown default whenever the parent's status changes
+  useEffect(() => {
+    setSelectedStatus(nextStatuses[0] ?? '');
+  }, [nextStatuses]);
+
   const mutation = useMutation({
     mutationFn: ({ newStatus, statusNote }) => updateOrderStatus({ orderId, newStatus, note: statusNote }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+    
+    // THE FIX: Use async/await and refetchQueries to force a hard UI block until the fresh data arrives
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['order', orderId] });
+      await queryClient.refetchQueries({ queryKey: ['admin-orders'] });
+      await queryClient.refetchQueries({ queryKey: ['my-orders'] });
+      
       setNote('');
+      setErrorMessage('');
+      if (onUpdated) onUpdated(); 
     },
     onError: (err) => {
       setErrorMessage(err.message || 'Failed to update status.');
@@ -39,26 +50,9 @@ export default function StatusUpdatePanel({ orderId, currentStatus, onUpdated })
 
   if (!nextStatuses.length) {
     return (
-      <div
-        style={{
-          padding: '16px',
-          border: '1px solid #E8E8E8',
-          borderRadius: '14px',
-          background: '#FFFFFF',
-        }}
-      >
-        <div
-          style={{
-            fontWeight: 600,
-            color: '#333333',
-            marginBottom: '6px',
-          }}
-        >
-          Status Update
-        </div>
-        <div style={{ color: '#666666' }}>
-          No further transitions are available for this order.
-        </div>
+      <div style={{ padding: '16px', border: '1px solid #E8E8E8', borderRadius: '14px', background: '#FFFFFF' }}>
+        <div style={{ fontWeight: 600, color: '#333333', marginBottom: '6px' }}>Status Update</div>
+        <div style={{ color: '#666666' }}>No further transitions are available for this order.</div>
       </div>
     );
   }
