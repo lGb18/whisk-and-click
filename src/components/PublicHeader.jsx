@@ -9,6 +9,8 @@ export default function PublicHeader() {
     <header style={{
       display: "flex",
       justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: "var(--space-md)",
       alignItems: "center",
       padding: "var(--space-md) 0",
       borderBottom: "1px solid var(--border)",

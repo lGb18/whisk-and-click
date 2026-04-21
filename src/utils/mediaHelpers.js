@@ -33,7 +33,7 @@ export function getOrderReferencePreview(order, blueprints = []) {
       return {
         hasImage: true,
         imageUrl: matchedCake.image_url, // Fixed to use Supabase schema
-        alt: `Bakery Catalog: ${matchedCake.name || "Signature Cake"}`, // Fixed to use 'name'
+        alt: `Bakeshop Catalog: ${matchedCake.name || "Signature Cake"}`, // Fixed to use 'name'
         fallbackLabel: "Catalog image missing",
       };
     }
@@ -42,10 +42,10 @@ export function getOrderReferencePreview(order, blueprints = []) {
   return {
     hasImage: false,
     imageUrl: "",
-    alt: "Bakery reference",
+    alt: "Bakeshop reference",
     fallbackLabel:
       order.reference_source === "recommendation"
-        ? "Bakery reference image no longer available"
+        ? "Bakeshop reference image no longer available"
         : "No reference available",
   };
 }

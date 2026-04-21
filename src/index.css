@@ -721,42 +721,125 @@ textarea:focus,
 }
 
 @media (max-width: 768px) {
+  :root {
+    --font-h1-size: 26px;
+    --font-h2-size: 22px;
+    --font-h3-size: 18px;
+
+    --space-3xl: 40px;
+    --space-2xl: 32px;
+    --space-xl: 24px;
+    --space-lg: 16px;
+  }
+
   .page-shell {
-    padding: var(--mobile-padding);
+    padding: var(--space-md) var(--mobile-padding);
   }
 
-  .order-confirmation-panel {
-    padding: var(--space-md);
+  .promo-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+  }
+  .promo-banner > div:last-child {
+    display: none; 
   }
 
-  .order-review-body {
+  .button-toggle-group {
     flex-direction: column;
   }
-
-  .order-preview {
-    min-height: 180px;
-  }
-
+  
   .order-actions,
   .checkout-actions {
     justify-content: stretch;
     flex-direction: column;
   }
-
+  
   .order-actions > *,
   .checkout-actions > * {
     width: 100%;
   }
-
-  .checkout-layout {
-    padding: var(--space-md);
-  }
-
+  
   .address-grid {
     grid-template-columns: 1fr;
   }
-
+  
   .address-full {
     grid-column: span 1;
+  }
+  
+  .order-review-body {
+    flex-direction: column;
+  }
+  
+  .order-preview {
+    min-height: 180px;
+  }
+
+  /* --- FIXED: Horizontal Scroll Nav --- */
+  nav {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; 
+  }
+  
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  nav button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* --- FIXED: Horizontal Swipe for Best Sellers --- */
+  .horizontal-mobile-scroll {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: var(--space-md) !important;
+    padding-bottom: var(--space-md) !important; 
+    scroll-snap-type: x mandatory; 
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; 
+  }
+  
+  .horizontal-mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .horizontal-mobile-scroll > * {
+    flex: 0 0 85% !important; 
+    scroll-snap-align: center;
+  }
+
+  /* --- FIXED: 2-Column Grid overriding React inline styles --- */
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-sm) !important;
+  }
+
+  /* Force the padding inside React's inline styles to shrink */
+  .card > div {
+    padding: var(--space-sm) !important; 
+  }
+
+  /* Shrink text so it fits the smaller 2-column cards */
+  .card h2, .category-card h3 {
+    font-size: 15px !important;
+  }
+  
+  .card span {
+    font-size: 14px !important;
+  }
+
+  /* Make the "Customize & Order" button fit the smaller cards */
+  .card .primary-button {
+    padding: 8px !important;
+    font-size: 13px !important;
   }
 }

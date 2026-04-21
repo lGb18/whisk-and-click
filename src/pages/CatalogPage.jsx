@@ -99,7 +99,7 @@ export default function CatalogPage() {
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && handleSelectCake(cake)}
               >
-                <div style={{ height: "260px", backgroundColor: "var(--surface-muted)", position: "relative" }}>
+                <div style={{ aspectRatio: "1/1", width: "100%", backgroundColor: "var(--surface-muted)", position: "relative" }}>
                   <img 
                     src={cake.image_url} // FIXED: Use DB image path
                     alt={`Photo of ${displayTitle}`} 

@@ -42,7 +42,7 @@ export default function RecommendationPage() {
       <div className="container-wide layout-stack">
         <PageHeader
           title="Recommended Cake Designs"
-          subtitle="We found these close bakery matches based on your preferences."
+          subtitle="We found these close bakeshop matches based on your preferences."
         />
 
         {topList.length > 0 ? (
@@ -57,7 +57,7 @@ export default function RecommendationPage() {
           </div>
         ) : (
           <div className="card" style={{ padding: "var(--space-2xl)", textAlign: "center" }}>
-            <h3 style={{ fontSize: "var(--font-h2-size)", margin: "0 0 var(--space-sm) 0" }}>No exact bakery matches found.</h3>
+            <h3 style={{ fontSize: "var(--font-h2-size)", margin: "0 0 var(--space-sm) 0" }}>No exact bakeshop matches found.</h3>
             <p style={{ color: "var(--text-secondary)", marginBottom: "var(--space-lg)" }}>
               Your taste is wonderfully unique! Let's build a custom concept.
             </p>

@@ -15,7 +15,8 @@ const CategoryCard = ({ title, imageUrl, onClick }) => (
     style={{ 
       borderRadius: "var(--radius-card)", 
       border: "none",
-      height: "320px", 
+      aspectRatio: "1/1",
+      width: "100%",
       position: "relative",
       overflow: "hidden",
       display: "flex",
@@ -79,7 +80,8 @@ const CategorySkeleton = () => (
     className="skeleton-pulse"
     style={{ 
       backgroundColor: "var(--surface-muted)", 
-      height: "320px",
+      aspectRatio: "1/1", /* FIXED: Replaced 320px height */
+      width: "100%",      /* FIXED: Ensure it fills its container */
       borderRadius: "var(--radius-card)",
       padding: "var(--space-lg)",
       display: "flex",
@@ -209,7 +211,7 @@ const HeroSection = ({ onStart, onBrowse }) => (
         textTransform: "uppercase", 
         letterSpacing: "1.5px" 
       }}>
-        Whisk & Click Bakery
+        Whisk & Click Bakeshop
       </span>
 
       <h1 style={{ 
@@ -255,13 +257,13 @@ const HeroSection = ({ onStart, onBrowse }) => (
 
 export default function HomePage() {
   const navigate = useNavigate();
-  
+  const cap = s => s?.replace(/^\w/, c => c.toUpperCase());
   // Fetch live data from Supabase
   const { data: bestSellers, isLoading, error } = useBestSellers(3);
   
   const categories = bestSellers ? bestSellers.map(cake => ({
     id: cake.id,
-    title: cake.metadata?.theme ? `${cake.metadata.theme}\nStyle` : cake.name,
+    title: cake.metadata?.theme ? `${cap(cake.metadata.theme)}\n` : cap(cake.name),
     route: "/best-sellers",
     imageUrl: cake.image_url
   })) : [];
@@ -351,9 +353,7 @@ export default function HomePage() {
               <button className="secondary-button" onClick={() => window.location.reload()}>Retry</button>
             </div>
           ) : (
-            <div style={{ 
-              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-lg)" 
-            }}>
+            <div className="category-grid horizontal-mobile-scroll">
               {isLoading 
                 ? Array.from({ length: 3 }).map((_, i) => <CategorySkeleton key={i} />)
                 : categories.map((category) => (

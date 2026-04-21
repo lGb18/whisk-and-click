@@ -91,7 +91,7 @@ export default function BestSellersPage() {
                   #{index + 1}
                 </div>
 
-                <div style={{ height: "300px", backgroundColor: "var(--surface-muted)" }}>
+                <div style={{ aspectRatio: "1/1", width: "100%", backgroundColor: "var(--surface-muted)", position: "relative" }}>
                   <img 
                     src={item.image_url} // FIXED schema reference
                     alt={`Photo of ${displayTitle}`} 

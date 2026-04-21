@@ -77,7 +77,7 @@ export default function GeneratorPage() {
         <header style={{ textAlign: "center" }}>
           <PageHeader
             title="Custom AI Studio"
-            subtitle="Your request is wonderfully unique. We couldn't find an exact match in our bakery, so our AI is sketching a custom concept just for you."
+            subtitle="Your request is wonderfully unique. We couldn't find an exact match in our bakeshop, so our AI is sketching a custom concept just for you."
           />
         </header>
 
