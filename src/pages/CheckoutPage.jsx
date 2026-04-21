@@ -43,22 +43,20 @@ export default function CheckoutPage() {
   } = useAppFlow();
 
   const [paymentDraft, setPaymentDraft] = useState({
-    paymentMethod: "cod", // Harmonized to match button values
+    paymentMethod: "cod", 
     referenceNumber: "",
     proofFile: null,
     notes: "",
   });
   
-  // 1. DATA & AUTH GUARD (HCI: Don't let them fill the form if they aren't logged in)
+  // 1. DATA & AUTH GUARD
   useEffect(() => {
     const verifyAccess = async () => {
-      // Check data
       if ((!selectedCake && !selectedFallback) || !cakeConfig) {
         navigate("/");
         return;
       }
       
-      // Check auth upfront
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate(`/auth?redirectTo=${encodeURIComponent(location.pathname)}`);
@@ -78,7 +76,7 @@ export default function CheckoutPage() {
     city: checkoutDraft?.city || "",
     region: checkoutDraft?.region || "",
     postalCode: checkoutDraft?.postalCode || "",
-    paymentMethod: checkoutDraft?.paymentMethod || "cod", // Harmonized
+    paymentMethod: checkoutDraft?.paymentMethod || "cod", 
     paymentReference: checkoutDraft?.paymentReference || "",
   }));
 
@@ -180,10 +178,22 @@ export default function CheckoutPage() {
 
   if (isAuthChecking) return <div className="page-shell"><p style={{textAlign:"center"}}>Securing checkout...</p></div>;
 
-  // Derive Display Image for Sidebar
+  // --- FIXED: Derive Display Data for Sidebar ---
   const isCatalog = !!selectedCake;
-  const displayImage = isCatalog ? selectedCake.image : selectedFallback?.imageUrl;
-  const displayTitle = isCatalog ? (selectedCake.title || "Custom Cake") : "Custom AI Concept";
+  
+  // 1. Use image_url instead of image
+  const displayImage = isCatalog ? selectedCake.image_url : selectedFallback?.imageUrl;
+  
+  // 2. Use name instead of title
+  const displayTitle = isCatalog ? (selectedCake.name || selectedCake.title || "Custom Cake") : "Custom AI Concept";
+
+  // 3. Translate the math vector for flavor into English
+  let displayFlavor = "Signature Base";
+  if (isCatalog && selectedCake?.metadata?.inferred_flavor) {
+     displayFlavor = selectedCake.metadata.inferred_flavor;
+  } else if (cakeConfig?.flavor) {
+     displayFlavor = cakeConfig.flavor >= 8 ? "Premium Base" : (cakeConfig.flavor <= 3 ? "Classic Base" : "Specialty Base");
+  }
 
   return (
     <div className="page-shell checkout-shell">
@@ -358,7 +368,7 @@ export default function CheckoutPage() {
               <PrimaryButton type="submit" disabled={isSubmitDisabled || isSubmitting} style={{ flex: 1 }}>
                 {isSubmitting ? "Processing Order..." : "Place Order"}
               </PrimaryButton>
-              <SecondaryButton type="button" onClick={() => navigate("/confirmation")} style={{ flex: 1 }}>
+              <SecondaryButton type="button" onClick={() => navigate("/order-confirmation")} style={{ flex: 1 }}>
                 Edit Customization
               </SecondaryButton>
             </div>
@@ -368,7 +378,6 @@ export default function CheckoutPage() {
           <aside className="checkout-summary" style={{ position: "sticky", top: "24px" }}>
             <div className="summary-card card">
               
-              {/* Fixed the Ghost Image Bug */}
               <div 
                 className="summary-preview" 
                 style={{ 
@@ -387,10 +396,9 @@ export default function CheckoutPage() {
                   <strong>{displayTitle}</strong>
                 </p>
                 
-                {/* Cleaned up raw object mapping to specific properties */}
-                {cakeConfig?.flavor && cakeConfig.flavor !== "unknown" && (
-                  <p className="summary-item"><span>Flavor</span> <span style={{ textTransform: "capitalize" }}>{cakeConfig.flavor}</span></p>
-                )}
+                {/* FIXED: Uses the translated displayFlavor instead of raw vector number */}
+                <p className="summary-item"><span>Flavor</span> <span style={{ textTransform: "capitalize" }}>{displayFlavor}</span></p>
+                
                 {customizationDraft?.sizeAdjustment && (
                   <p className="summary-item"><span>Size</span> <span style={{ textTransform: "capitalize" }}>{customizationDraft.sizeAdjustment}</span></p>
                 )}
@@ -403,7 +411,6 @@ export default function CheckoutPage() {
             <div className="summary-card card">
               <h3 className="summary-title" style={{ fontSize: "16px" }}>Personalization</h3>
               
-              {/* Fixed the Flavor/Message Bug */}
               {customizationDraft?.cakeMessage && (
                 <div style={{ marginBottom: "var(--space-sm)" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-secondary)", fontWeight: "600" }}>Cake Message:</span>

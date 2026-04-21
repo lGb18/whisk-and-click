@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppFlow } from "../state/AppFlow";
-import { cakeCatalog } from "../data/cakeCatalog";
-import { useRecommendations } from "../hooks/useRecommendation";
+import { useRecommendations } from "../hooks/useRecommendations";
 import PageHeader from "../components/PageHeader";
 import RecommendationCard from "../components/RecommendationCard";
 import SecondaryButton from "../components/SecondaryButton";
@@ -17,8 +16,20 @@ export default function RecommendationPage() {
   } = useAppFlow();
   
   // Assuming this hook populates the `recommendations` object in your AppFlow state
-  useRecommendations(cakeConfig, cakeCatalog);
-  const topList = recommendations?.topMatches ?? [];
+  const { topMatches, isWeakMatch, isLoading } = useRecommendations(cakeConfig);
+  
+  // The Threshold Check: If it's a weak match, force an empty list to trigger your Fallback UI
+  const topList = isWeakMatch ? [] : (topMatches || []);
+
+  // Prevent the UI from flashing the "No Matches" screen while Supabase is fetching
+  if (isLoading) {
+    return (
+      <div className="page-shell" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+        <div style={{ width: "40px", height: "40px", border: "4px solid var(--border)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
   
   function handleSelect(cake) {
     setSelectedCake(cake);

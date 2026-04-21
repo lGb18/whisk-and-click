@@ -29,16 +29,11 @@ function useLocalStorage(key, initialValue) {
 }
 export function AppFlowProvider({ children }) {
   const [cakeConfig, setCakeConfig] = useLocalStorage("app_cakeConfig", {
-    occasion: "",
+    form_factor: "",
+    aesthetic: "",
+    complexity: "",
     flavor: "",
-    style: "",
-    budget: "",
-    size_category: "",
-    // tiers: "",
-    // frosting: "",
-    
-    // colorTheme: "",
-    // shape: "Round"
+    primary_color: ""
   });
 
   const [customizationDraft, setCustomizationDraft] = useLocalStorage("app_customizationDraft", {
@@ -78,16 +73,11 @@ export function AppFlowProvider({ children }) {
   
   function resetFlow() {
     setCakeConfig({
-      occasion: "",
+      form_factor: "",
+      aesthetic: "",
+      complexity: "",
       flavor: "",
-      style: "",
-      budget: "",
-      size_category: "",
-      // tiers: "",
-      // frosting: "",
-      // colorTheme: "",
-      // shape: "Round"
-      
+      primary_color: ""
     });
     setChatHistory([]);
 

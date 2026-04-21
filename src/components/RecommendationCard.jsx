@@ -14,8 +14,8 @@ export default function RecommendationCard({ cake, onSelect }) {
       }}
     >
       <img
-        src={cake.image}
-        alt={cake.image_filename}
+        src={cake.image_url}
+        alt={cake.name}
         style={{
           width: "100%",
           height: "230px",
@@ -32,7 +32,7 @@ export default function RecommendationCard({ cake, onSelect }) {
           fontWeight: 500
         }}
       >
-        {cake.image_filename}
+        {cake.name}
       </h3>
 
       <div

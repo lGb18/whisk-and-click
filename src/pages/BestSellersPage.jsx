@@ -1,68 +1,50 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppFlow } from '../state/AppFlow';
-import { cakeCatalog } from '../data/cakeCatalog';
-import { CAKE_IMAGES } from '../data/assets'; // Import CAKE_IMAGES
+import { useBlueprints } from '../hooks/useBlueprints'; // The hook we built in Sprint 1
+import { useBestSellers } from '../hooks/useBestSellers';
 
-// --- HELPER FUNCTIONS (Same as Catalog for consistency) ---
-const getPriceEstimation = (budget) => {
-  const prices = { low: "$45.00", medium: "$85.00", high: "$150.00" };
-  return prices[budget?.toLowerCase()] || "$65.00";
-};
-
+// Uses the new database schema
 const generateTitle = (cake) => {
-  if (cake?.title && cake.title.trim() !== "") return cake.title;
-  const flavor = cake?.flavor && cake.flavor !== "unknown" ? cake.flavor : "Signature";
-  const style = cake?.style && cake.style !== "unknown" ? cake.style : "Classic";
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-  return `${capitalize(style)} ${capitalize(flavor)} Cake`;
-};
-
-// Map your best seller IDs to actual cakeCatalog items
-const BEST_SELLER_IDS = ["cake_00002", "cake_00001", "cake_00004"];
-
-// Create best sellers data that matches cakeCatalog structure
-const getBestSellersData = () => {
-  return BEST_SELLER_IDS.map(id => {
-    const cake = cakeCatalog.find(c => c.cake_id === id);
-    if (cake) {
-      return {
-        ...cake,
-        // Ensure image path is correct
-        image: cake.image || CAKE_IMAGES[cake.image_key] || "/assets/placeholder.png"
-      };
-    }
-    return null;
-  }).filter(Boolean);
+  if (cake?.name && cake.name.trim() !== "") return cake.name;
+  
+  const flavorStr = cake?.metadata?.inferred_flavor || "Signature";
+  const styleStr = cake?.metadata?.theme || cake?.metadata?.frosting_style || "Classic";
+  
+  const capitalize = (str) => {
+    if (!str) return "";
+    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  };
+  return `${capitalize(styleStr)} ${capitalize(flavorStr)} Cake`;
 };
 
 export default function BestSellersPage() {
   const navigate = useNavigate();
   const { setSelectedCake, setCakeConfig } = useAppFlow();
   
-  const bestSellersData = getBestSellersData();
+  // 1. Fetch live data from Supabase
+  const { data: bestSellersData = [], isLoading, error } = useBestSellers(10);
 
   const handleSelectCake = (cake) => {
-    // Set the selected cake
     setSelectedCake(cake);
     
-    // Pre-fill the cakeConfig
     setCakeConfig({
-      occasion: cake.occasion !== "unknown" ? cake.occasion : "",
-      flavor: cake.flavor !== "unknown" ? cake.flavor : "",
-      style: cake.style !== "unknown" ? cake.style : "",
-      budget: cake.budget !== "unknown" ? cake.budget : "",
-      size_category: cake.size_category !== "unknown" ? cake.size_category : "",
+      form_factor: cake.form_factor,
+      complexity: cake.complexity,
+      aesthetic: cake.aesthetic,
+      flavor: cake.flavor,
+      primary_color: cake.primary_color
     });
 
-    // Navigate to order confirmation
     navigate("/order-confirmation");
   };
+
+  if (isLoading) return <div className="page-shell"><p style={{textAlign:"center"}}>Loading our best sellers...</p></div>;
+  if (error) return <div className="page-shell"><p style={{textAlign:"center", color:"red"}}>Failed to load catalog.</p></div>;
 
   return (
     <main className="page-shell">
       <div className="container-reco layout-stack">
         
-        {/* HEADER */}
         <header style={{ display: "flex", alignItems: "baseline", gap: "var(--space-md)" }}>
           <button 
             className="secondary-button" 
@@ -77,15 +59,13 @@ export default function BestSellersPage() {
           </div>
         </header>
 
-        {/* PRODUCT GRID */}
         <div className="category-grid">
           {bestSellersData.map((item, index) => {
             const displayTitle = generateTitle(item);
-            const price = getPriceEstimation(item.budget);
 
             return (
               <article 
-                key={item.cake_id} 
+                key={item.id} // UUID from Supabase
                 className="card" 
                 style={{ 
                   position: "relative", 
@@ -100,42 +80,27 @@ export default function BestSellersPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSelectCake(item)}
               >
                 
-                {/* RANK BADGE */}
                 <div style={{
-                  position: "absolute",
-                  top: "var(--space-md)",
-                  left: "var(--space-md)",
-                  backgroundColor: "var(--secondary)",
-                  color: "var(--text-primary)",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  zIndex: 2,
+                  position: "absolute", top: "var(--space-md)", left: "var(--space-md)",
+                  backgroundColor: "var(--secondary)", color: "var(--text-primary)",
+                  width: "40px", height: "40px", borderRadius: "50%",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: "bold", fontSize: "20px", zIndex: 2,
                   boxShadow: "var(--shadow-card)"
                 }}>
                   #{index + 1}
                 </div>
 
-                {/* IMAGE */}
                 <div style={{ height: "300px", backgroundColor: "var(--surface-muted)" }}>
                   <img 
-                    src={item.image} 
+                    src={item.image_url} // FIXED schema reference
                     alt={`Photo of ${displayTitle}`} 
                     loading="lazy"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    onError={(e) => { 
-                      e.target.src = "/assets/placeholder.png"; 
-                      e.target.style.objectFit = "contain"; 
-                    }}
+                    onError={(e) => { e.target.src = "/assets/placeholder.png"; e.target.style.objectFit = "contain"; }}
                   />
                 </div>
 
-                {/* CONTENT */}
                 <div style={{ padding: "var(--space-lg)", display: "flex", flexDirection: "column", flex: 1 }}>
                   <h2 style={{ fontSize: "var(--font-h3-size)", marginBottom: "var(--space-xs)", lineHeight: 1.2 }}>
                     {displayTitle}
@@ -143,7 +108,7 @@ export default function BestSellersPage() {
                   
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)" }}>
                     <span style={{ color: "var(--primary)", fontWeight: "600", fontSize: "18px" }}>
-                      {price}
+                      ₱{item.base_price} {/* FIXED to read live database price */}
                     </span>
                     <span className="caption" style={{ color: "var(--warning)", fontWeight: "600" }}>
                       ★ Best Seller

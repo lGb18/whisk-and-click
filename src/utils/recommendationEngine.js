@@ -1,38 +1,46 @@
-// processor of the full recommendation pipeline
-// config + catalog > filter > score > return result/fallback
-import { filterCandidates } from "../utils/filterCandidates";
-import { scoreSimilarity } from "../utils/scoreSimilarity";
+import { calculateCosineSimilarity } from './scoreSimilarity';
 
+/**
+ * Processes the user's config against the entire database catalog.
+ */
+export function getRecommendations(userConfig, catalog) {
+  if (!catalog || catalog.length === 0) {
+    return { topMatches: [], bestScore: 0, isWeakMatch: true };
+  }
 
-export function recommendationEngine(cakeConfig, cakeCatalog){
+  // 1. Score every blueprint in the database using 4D Vector Math
+  const scoredCatalog = catalog.map(blueprint => {
+    const score = calculateCosineSimilarity(userConfig, blueprint);
+    return { ...blueprint, matchScore: score };
+  });
 
-    const candidates = filterCandidates(cakeConfig, cakeCatalog);
-    const ranked = scoreSimilarity(cakeConfig, candidates);
-    const topMatches = ranked.slice(0, 3);
-    const bestMatch = topMatches[0];
-    const thirdMatch = topMatches[2];
+  // 2. Sort by highest score first (closest to 1.0)
+  scoredCatalog.sort((a, b) => b.matchScore - a.matchScore);
 
-    const bestScore = bestMatch?.normalizedScore ?? 0;
-    const thirdScore = thirdMatch?.normalizedScore ?? 0;
+  // 3. Apply the Color Filter (Soft Filter)
+  const requestedColor = userConfig.primary_color;
+  let finalResults = scoredCatalog;
 
-    const isWeakMatch =
-        ranked.length === 0 ||
-        bestScore < 0.5 ||
-        (topMatches.length >= 3 && bestScore - thirdScore < 0.1);
-        
+  if (requestedColor && requestedColor !== "Any") {
+    // Look for cakes that match the requested color
+    const colorMatches = scoredCatalog.filter(
+      cake => cake.primary_color.toLowerCase() === requestedColor.toLowerCase()
+    );
+    
+    // If we found exact color matches, prioritize them!
+    if (colorMatches.length > 0) {
+      finalResults = colorMatches;
+    }
+  }
+
+  // 4. Extract the absolute best match
+  const topMatches = finalResults.slice(0, 3);
+  const bestScore = topMatches.length > 0 ? topMatches[0].matchScore : 0;
+
+  // 5. Threshold Return
   return {
-    candidates,
-    ranked,
     topMatches,
-    isWeakMatch,
+    bestScore,
+    isWeakMatch: bestScore < 0.85 // 85% requirement for a standard catalog match
   };
 }
-
-
-    // console.log("engine reco:", topMatches);
-    // console.log("filtered:", candidates.length);
-    // console.log("top:", ranked[0]);
-//   if (!bestMatch || bestMatch.normalizedScore < 0.6) {
-//     navigate("/fallback");
-//     return null;
-//   }

@@ -38,14 +38,16 @@ export default function WizardPage() {
 
     const key = currentQuestion.key;
 
+    const storedValue = option.vectorValue !== undefined ? option.vectorValue : option.textValue;
+
     setCakeConfig((prev) => ({
       ...prev,
-      [key]: option.toLowerCase()
+      [key]: storedValue 
     }));
     
     const updatedHistory = [
       ...chatHistory,
-      { role: "user", text: option.toLowerCase() }
+      { role: "user", text: option.label } 
     ];
 
     const nextIndex = currentQuestionIndex + 1;
@@ -58,11 +60,25 @@ export default function WizardPage() {
       setChatHistory(updatedHistory);
     } else {
       setChatHistory(updatedHistory);
+      
+      console.log("🚀 SPRINT 1 COMPLETE. FINAL VECTOR PAYLOAD:", {
+         ...cakeConfig,
+         [key]: storedValue
+      });
+      
       navigate("/summary");
-
     }
   }
-
+  function handleReset() {
+    setCakeConfig({}); 
+    
+    setChatHistory([
+      {
+        role: "system",
+        text: questions[0].question
+      }
+    ]);
+  }
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
@@ -132,8 +148,11 @@ export default function WizardPage() {
             <div style={{ display: "flex", flexGrow: "1", gap: "24px", flexDirection: "column", minHeight: "68px", justifyContent: "center"}}>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignContent: "flex-start"}}>
                 {currentQuestion.options.map((option) => (
-                  <ChatOptionButton key={option} onClick={() => setTimeout(() => handleAnswer(option), 300)}>
-                    {option}
+                  <ChatOptionButton 
+                    key={option.label} 
+                    onClick={() => setTimeout(() => handleAnswer(option), 300)}
+                  >
+                    {option.label} {/* Display the text, but pass the object! */}
                   </ChatOptionButton>
                 ))}
               </div>
@@ -145,6 +164,13 @@ export default function WizardPage() {
 
         <div style={{ display: "flex", gap: "16px", padding: "10px", flexDirection: "row" , justifyContent: "flex-end"}}>
           <div style={{ display: "flex", gap: "16px" }}>
+            <SecondaryButton 
+              onClick={handleReset} 
+              style={{ color: "red", borderColor: "red" }}
+            >
+              Start Over
+            </SecondaryButton>
+            
             <SecondaryButton onClick={() => navigate("/")}>
               Back
             </SecondaryButton>

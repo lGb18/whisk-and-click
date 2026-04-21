@@ -15,6 +15,48 @@ import { fetchPaymentByOrderId, getPaymentProofSignedUrl } from "../utils/paymen
 import { getStatusLabel } from "../utils/orderStatusConfig";
 import { useAuthSession } from "../hooks/useAuthSession";
 
+// Translates the 1-9 math vectors
+function translateVectorConfig(config) {
+  if (!config) return {};
+  
+  const translated = {};
+  
+  if (config.form_factor) {
+    if (config.form_factor <= 3) translated["Cake Structure"] = "Bento or Cupcakes";
+    else if (config.form_factor >= 8) translated["Cake Structure"] = "Multi-Tier or Custom Shape";
+    else translated["Cake Structure"] = "Standard Round or Square";
+  }
+
+  if (config.complexity) {
+    if (config.complexity <= 3) translated["Design Complexity"] = "Minimalist";
+    else if (config.complexity >= 8) translated["Design Complexity"] = "Highly Intricate / 3D";
+    else translated["Design Complexity"] = "Detailed / Piped / Loaded";
+  }
+
+  if (config.aesthetic) {
+    if (config.aesthetic <= 3) translated["Theme Vibe"] = "Elegant & Formal";
+    else if (config.aesthetic >= 8) translated["Theme Vibe"] = "Playful & Loud";
+    else translated["Theme Vibe"] = "Casual & Classic";
+  }
+
+  if (config.flavor) {
+    if (config.flavor <= 3) translated["Base Flavor"] = "Classic (Vanilla/Chocolate)";
+    else if (config.flavor >= 8) translated["Base Flavor"] = "Premium (Yema/Red Velvet)";
+    else translated["Base Flavor"] = "Specialty";
+  }
+
+  if (config.primary_color) {
+    translated["Primary Color"] = config.primary_color;
+  }
+
+  Object.keys(config).forEach(key => {
+    if (!['form_factor', 'complexity', 'aesthetic', 'flavor', 'primary_color'].includes(key)) {
+      translated[key] = config[key];
+    }
+  });
+
+  return translated;
+}
 function formatDateTime(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -184,7 +226,7 @@ export default function OrderDetailsPage() {
               </SectionCard>
 
               <SectionCard title="Cake Configuration">
-                <KeyValueGrid data={{ ...order.cake_config, ...order.customization }} />
+                <KeyValueGrid data={{ ...translateVectorConfig(order.cake_config), ...order.customization }} />
               </SectionCard>
             </div>
 

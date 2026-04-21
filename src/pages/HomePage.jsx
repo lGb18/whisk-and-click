@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import PrimaryButton from "../components/PrimaryButton";
 import { CAKE_IMAGES, HERO_SLIDES } from "../data/assets";
+import { useBlueprints } from "../hooks/useBlueprints";
+import { useCarousel } from "../hooks/useCarousel";
+import { useBestSellers } from "../hooks/useBestSellers";
 
 const CategoryCard = ({ title, imageUrl, onClick }) => (
   <button 
@@ -91,51 +94,62 @@ const CategorySkeleton = () => (
 
 const HeroCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  
+  // Fetch live slides from Supabase
+  const { data: slides = [], isLoading } = useCarousel();
 
-  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % HERO_SLIDES.length);
-  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  // FIXED: Now uses the dynamic 'slides' array length instead of the hardcoded HERO_SLIDES
+  const nextSlide = () => setCurrentIndex((prev) => slides.length > 0 ? (prev + 1) % slides.length : 0);
+  const prevSlide = () => setCurrentIndex((prev) => slides.length > 0 ? (prev - 1 + slides.length) % slides.length : 0);
+
+  useEffect(() => {
+    if (isPaused || slides.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 5000); 
+    return () => clearInterval(timer);
+  }, [isPaused, slides.length]);
+
+  if (isLoading) return <div className="skeleton-pulse" style={{ width: "100%", aspectRatio: "4/5", borderRadius: "var(--radius-card)", margin: "0 auto", maxWidth: "540px" }} />;
+  if (slides.length === 0) return null;
 
   return (
-    <div style={{
-      width: "100%",
-      maxWidth: "540px",
-      aspectRatio: "4/5",
-      backgroundColor: "var(--surface-muted)",
-      borderRadius: "var(--radius-card)", 
-      boxShadow: "var(--shadow-card)",
-      position: "relative",
-      overflow: "hidden",
-      display: "flex",
-      margin: "0 auto"
-    }}>
-      <div style={{
-        display: "flex",
+    <div 
+      onMouseEnter={() => setIsPaused(true)}  
+      onMouseLeave={() => setIsPaused(false)} 
+      style={{
         width: "100%",
-        height: "100%",
+        maxWidth: "540px",
+        aspectRatio: "4/5",
+        backgroundColor: "var(--surface-muted)",
+        borderRadius: "var(--radius-card)", 
+        boxShadow: "var(--shadow-card)",
+        position: "relative",
+        overflow: "hidden",
+        display: "flex",
+        margin: "0 auto"
+      }}
+    >
+      <div style={{
+        display: "flex", width: "100%", height: "100%",
         transform: `translateX(-${currentIndex * 100}%)`,
         transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)"
       }}>
-        {HERO_SLIDES.map((slide) => (
+        {slides.map((slide) => (
           <img 
             key={slide.id} 
-            src={slide.src} 
-            alt={slide.alt} 
+            src={slide.image_url} 
+            alt={slide.alt_text} 
             style={{ width: "100%", height: "100%", objectFit: "cover", flexShrink: 0 }} 
-           
-            loading={slide.id === 1 ? "eager" : "lazy"} 
           />
         ))}
       </div>
 
       <div style={{ 
-        position: "absolute", 
-        bottom: "var(--space-lg)", 
-        left: "0", 
-        width: "100%", 
-        display: "flex", 
-        justifyContent: "space-between", 
-        padding: "0 var(--space-lg)", 
-        pointerEvents: "none" 
+        position: "absolute", bottom: "var(--space-lg)", left: "0", 
+        width: "100%", display: "flex", justifyContent: "space-between", 
+        padding: "0 var(--space-lg)", pointerEvents: "none" 
       }}>
         <button type="button" onClick={prevSlide} className="carousel-button" aria-label="Previous image" style={{ pointerEvents: "auto" }}>
           &#10094;
@@ -143,6 +157,24 @@ const HeroCarousel = () => {
         <button type="button" onClick={nextSlide} className="carousel-button" aria-label="Next image" style={{ pointerEvents: "auto" }}>
           &#10095;
         </button>
+      </div>
+
+      {/* FIXED: The dots now map dynamically to the database slides */}
+      <div style={{
+        position: "absolute", bottom: "12px", left: "0",
+        width: "100%", display: "flex", justifyContent: "center",
+        gap: "8px", pointerEvents: "none"
+      }}>
+        {slides.map((_, idx) => (
+          <div 
+            key={idx}
+            style={{
+              width: "8px", height: "8px", borderRadius: "50%",
+              backgroundColor: currentIndex === idx ? "var(--primary)" : "rgba(255,255,255,0.5)",
+              transition: "background-color 0.3s ease"
+            }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -222,43 +254,16 @@ const HeroSection = ({ onStart, onBrowse }) => (
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800)); 
-        const data = [
-          { 
-            id: "cake_00002", 
-            title: "Chocolate\nDrip Cake", 
-            route: "/best-sellers",
-            imageUrl: CAKE_IMAGES.CHOCO_DRIP
-          },
-          { 
-            id: "cake_00001", 
-            title: "Floral\nWedding Cake", 
-            route: "/best-sellers", 
-            imageUrl: CAKE_IMAGES.WEDDING_FLORAL 
-          },
-          { 
-            id: "cake_00004", 
-            title: "Savory\nSpecial", 
-            route: "/best-sellers", 
-            imageUrl: CAKE_IMAGES.SAVORY_SPECIAL 
-          }
-        ];
-        setCategories(data);
-      } catch (err) {
-        setError("Failed to load categories.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+  
+  // Fetch live data from Supabase
+  const { data: bestSellers, isLoading, error } = useBestSellers(3);
+  
+  const categories = bestSellers ? bestSellers.map(cake => ({
+    id: cake.id,
+    title: cake.metadata?.theme ? `${cake.metadata.theme}\nStyle` : cake.name,
+    route: "/best-sellers",
+    imageUrl: cake.image_url
+  })) : [];
 
   return (
     <main className="page-shell" style={{ padding: "0 var(--space-lg)" }}>
@@ -327,19 +332,11 @@ export default function HomePage() {
               Best Seller Categories
             </h2>
             
-            {/* Restored the route to your dedicated Best Sellers page */}
             <button 
               style={{ 
-                background: "none", 
-                border: "none", 
-                cursor: "pointer", 
-                fontWeight: "600", 
-                fontSize: "15px", 
-                color: "var(--primary)", 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "4px", 
-                padding: 0 
+                background: "none", border: "none", cursor: "pointer", 
+                fontWeight: "600", fontSize: "15px", color: "var(--primary)", 
+                display: "flex", alignItems: "center", gap: "4px", padding: 0 
               }} 
               onClick={() => navigate("/best-sellers")}
             >
@@ -349,14 +346,12 @@ export default function HomePage() {
 
           {error ? (
             <div className="alert alert-error">
-              <p style={{ margin: "0 0 var(--space-sm) 0" }}>{error}</p>
+              <p style={{ margin: "0 0 var(--space-sm) 0" }}>Failed to load live catalog.</p>
               <button className="secondary-button" onClick={() => window.location.reload()}>Retry</button>
             </div>
           ) : (
             <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
-              gap: "var(--space-lg)" 
+              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-lg)" 
             }}>
               {isLoading 
                 ? Array.from({ length: 3 }).map((_, i) => <CategorySkeleton key={i} />)

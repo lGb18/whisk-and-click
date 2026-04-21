@@ -1,17 +1,24 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppFlow } from "../state/AppFlow";
 import PageHeader from "../components/PageHeader";
-import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
+import PrimaryButton from "../components/PrimaryButton";
 
-// --- HELPER FUNCTIONS ---
+// --- FIXED GENERATE TITLE ---
+// Uses the new database 'name' column or safely falls back to the JSON metadata
 const generateTitle = (cake) => {
+  if (cake?.name && cake.name.trim() !== "") return cake.name;
   if (cake?.title && cake.title.trim() !== "") return cake.title;
-  const flavor = cake?.flavor && cake.flavor !== "unknown" ? cake.flavor : "Signature";
-  const style = cake?.style && cake.style !== "unknown" ? cake.style : "Classic";
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-  return `${capitalize(style)} ${capitalize(flavor)} Cake`;
+  
+  const flavorStr = cake?.metadata?.inferred_flavor || "Signature";
+  const styleStr = cake?.metadata?.theme || cake?.metadata?.frosting_style || "Classic";
+  
+  const capitalize = (str) => {
+    if (!str) return "";
+    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  };
+  return `${capitalize(styleStr)} ${capitalize(flavorStr)} Cake`;
 };
 
 export default function OrderConfirmationPage() {
@@ -30,8 +37,7 @@ export default function OrderConfirmationPage() {
 
   const isFallbackEmpty = !selectedFallback || Object.keys(selectedFallback).length === 0;
   const hasSelection = selectedCake || !isFallbackEmpty;
-  console.log(selectedFallback);
-  console.log(selectedCake);
+  
   // Protect the route if they navigate here directly without a cake
   useEffect(() => {
     if (!hasSelection) {
@@ -41,19 +47,29 @@ export default function OrderConfirmationPage() {
 
   if (!hasSelection) return null;
 
-  // --- DERIVE DISPLAY DATA ---
+  // --- DERIVE DISPLAY DATA (UPDATED FOR SPRINT 1 VECTORS) ---
   const isCatalog = !!selectedCake;
   const displayTitle = isCatalog ? generateTitle(selectedCake) : "Custom AI Concept";
-  const displayImage = isCatalog ? selectedCake.image : selectedFallback?.imageUrl;
   
-  // Use config fallbacks if the catalog item is missing specific metadata
-  const displayFlavor = isCatalog && selectedCake.flavor !== "unknown" 
-    ? selectedCake.flavor 
-    : (cakeConfig?.flavor || "Baker's Choice");
-    
-  const displayOccasion = isCatalog && selectedCake.occasion !== "unknown" 
-    ? selectedCake.occasion 
-    : (cakeConfig?.occasion || "Special Event");
+  // FIXED: Using image_url from Supabase schema
+  const displayImage = isCatalog ? selectedCake.image_url : selectedFallback?.imageUrl; 
+  
+  // FIXED: Translate math vectors to English strings for the UI
+  let displayFlavor = "Signature Base";
+  if (isCatalog && selectedCake?.metadata?.inferred_flavor) {
+     displayFlavor = selectedCake.metadata.inferred_flavor;
+  } else if (!isCatalog && cakeConfig?.flavor) {
+     displayFlavor = cakeConfig.flavor >= 5 ? "Premium Specialty" : "Classic Standard";
+  }
+
+  let displayOccasion = "Special Event";
+  if (isCatalog && selectedCake?.metadata?.theme) {
+     displayOccasion = selectedCake.metadata.theme;
+  } else if (!isCatalog && cakeConfig?.aesthetic) {
+     if (cakeConfig.aesthetic <= 3) displayOccasion = "Formal / Elegant";
+     else if (cakeConfig.aesthetic >= 8) displayOccasion = "Playful / Novelty";
+     else displayOccasion = "Classic Celebration";
+  }
 
   return (
     <div className="page-shell checkout-shell">
@@ -64,9 +80,6 @@ export default function OrderConfirmationPage() {
           subtitle="Review your base selection and add your personal touches before checkout."
         />
 
-        {/* Configurator Layout: Uses your existing CSS grid for checkout 
-          Left: Visual Anchor | Right: Interactive Form
-        */}
         <div className="checkout-layout" style={{ marginTop: "var(--space-xl)" }}>
           
           {/* ==========================================
